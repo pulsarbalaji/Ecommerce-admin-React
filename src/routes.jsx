@@ -6,10 +6,12 @@ import {
   ServerStackIcon,
   RectangleStackIcon,
   UserGroupIcon,
+  Squares2X2Icon,
 } from "@heroicons/react/24/solid";
 import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
 import { SignIn, SignUp } from "@/pages/auth";
 import AdminUser from "./pages/admin/Admin";
+import Category from "./pages/category/Category";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -30,6 +32,12 @@ export const routes = [
         name: "admin",
         path: "/AdminUser",
         element: <AdminUser />,
+      },
+      {
+        icon: <Squares2X2Icon  {...icon} />,
+        name: "category",
+        path: "/category",
+        element: <Category />,
       },
       {
         icon: <UserCircleIcon {...icon} />,
