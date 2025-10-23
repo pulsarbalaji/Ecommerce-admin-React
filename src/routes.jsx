@@ -21,6 +21,7 @@ import Product from "./pages/product/Product";
 import Offer from "./pages/offers/Offer";
 import Orders from "./pages/oders/Order";
 import ContactUs from "./pages/contactus/ContactUs";
+import Customers from "./pages/customer/Customer";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -70,7 +71,7 @@ export const routes = [
         icon: <UsersIcon {...icon} />,
         name: "Customer Details",
         path: "/customer_details",
-        element: <Orders />,
+        element: <Customers />,
       },
       {
         icon: <PhoneIcon {...icon} />,

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import {
-  Card,
-  CardBody,
+  Dialog,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
   Button,
   Spinner,
 } from "@material-tailwind/react";
@@ -28,45 +30,50 @@ export default function ViewContact({ open, handleOpenClose, contactId }) {
     if (contactId) fetchContact();
   }, [contactId]);
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <Card className="w-full max-w-lg">
-        <CardBody>
-          <h2 className="text-xl font-semibold text-center mb-6">
-            View Contact Us 👁️
-          </h2>
-
-          {loading ? (
-            <div className="flex justify-center items-center py-6 gap-2">
-              <Spinner color="blue" className="h-6 w-6" />
-              Loading...
-            </div>
-          ) : contact ? (
-            <div className="space-y-3">
-              <p><strong>Name:</strong> {contact.name}</p>
-              <p><strong>Email:</strong> {contact.email}</p>
-              <p><strong>Phone:</strong> {contact.phone}</p>
-              <p><strong>Message:</strong> {contact.message}</p>
-            </div>
-          ) : (
-            <div className="text-center text-red-600 py-6">
-              No contact found.
-            </div>
-          )}
-
-          <div className="flex justify-center mt-6">
-            <Button
-              variant="outlined"
-              color="blue-gray"
-              onClick={() => handleOpenClose(false)}
-            >
-              Back
-            </Button>
+    <Dialog
+      open={open}
+      size="md"
+      handler={() => handleOpenClose(false)}
+      className="overflow-visible"
+    >
+      <DialogHeader>View Contact Us 👁️</DialogHeader>
+      <DialogBody divider>
+        {loading ? (
+          <div className="flex justify-center items-center gap-2 py-6">
+            <Spinner color="blue" className="h-6 w-6" />
+            Loading...
           </div>
-        </CardBody>
-      </Card>
-    </div>
+        ) : contact ? (
+          <div className="space-y-3">
+            <p>
+              <strong>Name:</strong> {contact.name}
+            </p>
+            <p>
+              <strong>Email:</strong> {contact.email}
+            </p>
+            <p>
+              <strong>Phone:</strong> {contact.phone}
+            </p>
+            <p>
+              <strong>Message:</strong> {contact.message}
+            </p>
+          </div>
+        ) : (
+          <div className="text-center text-red-600 py-6">
+            No contact found.
+          </div>
+        )}
+      </DialogBody>
+      <DialogFooter>
+        <Button
+          variant="outlined"
+          color="blue-gray"
+          onClick={() => handleOpenClose(false)}
+        >
+          Back
+        </Button>
+      </DialogFooter>
+    </Dialog>
   );
 }
