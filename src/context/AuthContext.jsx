@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
 
 const AuthContext = createContext();
 
@@ -9,11 +9,13 @@ export const AuthProvider = ({ children }) => {
     admin: null,
   });
 
-  // ✅ Load from sessionStorage on app start
   useEffect(() => {
-    const storedAccess = sessionStorage.getItem("access");
-    const storedRefresh = sessionStorage.getItem("refresh");
-    const storedAdmin = sessionStorage.getItem("admin");
+    const storedAccess =
+      sessionStorage.getItem("access") || localStorage.getItem("access");
+    const storedRefresh =
+      sessionStorage.getItem("refresh") || localStorage.getItem("refresh");
+    const storedAdmin =
+      sessionStorage.getItem("admin") || localStorage.getItem("admin");
 
     if (storedAccess && storedRefresh && storedAdmin) {
       setAuthData({
@@ -24,16 +26,20 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // ✅ Login function (store in state + session)
-  const login = (data) => {
-    sessionStorage.setItem("access", data.access);
-    sessionStorage.setItem("refresh", data.refresh);
-    sessionStorage.setItem("admin", JSON.stringify(data.admin));
+  // ✅ Login function (stores to correct place)
+  const login = (data, remember = false) => {
+    const storage = remember ? localStorage : sessionStorage;
+
+    storage.setItem("access", data.access);
+    storage.setItem("refresh", data.refresh);
+    storage.setItem("admin", JSON.stringify(data.admin));
+
     setAuthData(data);
   };
 
-  // ✅ Logout function
+  // ✅ Logout function (clears all)
   const logout = () => {
+    localStorage.clear();
     sessionStorage.clear();
     setAuthData({ access: null, refresh: null, admin: null });
   };
@@ -44,5 +50,8 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+// ✅ Custom Hook (for easy import)
+export const useAuth = () => useContext(AuthContext);
 
 export default AuthContext;

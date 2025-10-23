@@ -21,6 +21,7 @@ import {
   useMaterialTailwindController,
   setOpenSidenav,
 } from "@/context";
+import api from "@/utils/base_url";
 
 export function DashboardNavbar() {
   const [controller, dispatch] = useMaterialTailwindController();
@@ -29,10 +30,25 @@ export function DashboardNavbar() {
   const navigate = useNavigate();
   const [layout, page] = pathname.split("/").filter((el) => el !== "");
 
-  const handleLogout = () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    navigate("/auth/sign-in");
+  const handleLogout = async () => {
+    try {
+      // Get refresh token from sessionStorage
+      const refreshToken = sessionStorage.getItem("refresh");
+
+      // Attempt backend blacklisting
+      if (refreshToken) {
+        await api.post("/logout/", { refresh: refreshToken });
+      }
+
+      // Clear all storage
+      localStorage.clear();
+      sessionStorage.clear();
+
+      // Redirect to sign-in
+      navigate("/auth/sign-in");
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
   };
 
   return (
@@ -91,7 +107,7 @@ export function DashboardNavbar() {
           </IconButton>
 
           {/* Profile Dropdown */}
-          <Menu >
+          <Menu>
             <MenuHandler>
               <Avatar
                 src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"

@@ -1,10 +1,6 @@
 import {
   HomeIcon,
-  UserCircleIcon,
-  TableCellsIcon,
-  InformationCircleIcon,
   ServerStackIcon,
-  RectangleStackIcon,
   UserGroupIcon,
   Squares2X2Icon,
   ShoppingBagIcon,
@@ -19,7 +15,7 @@ import AdminUser from "./pages/admin/Admin";
 import Category from "./pages/category/Category";
 import Product from "./pages/product/Product";
 import Offer from "./pages/offers/Offer";
-import Orders from "./pages/oders/Order";
+import Orders from "./pages/orders/Order";
 import ContactUs from "./pages/contactus/ContactUs";
 import Customers from "./pages/customer/Customer";
 
@@ -78,6 +74,18 @@ export const routes = [
         name: "Contact Us Details",
         path: "/contact_us",
         element: <ContactUs />,
+      },
+    ],
+  },
+   {
+    title: "auth pages",
+    layout: "auth",
+    pages: [
+      {
+        icon: <ServerStackIcon {...icon} />,
+        name: "sign in",
+        path: "/sign-in",
+        element: <SignIn />,
       },
     ],
   },

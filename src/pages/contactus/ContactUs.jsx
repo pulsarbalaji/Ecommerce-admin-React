@@ -23,7 +23,7 @@ export default function ContactUs() {
       const res = await api.get("contactus/", {
         params: { page: pageNumber, page_size: pageSize },
       });
-      setContacts(res.data.results || []);
+      setContacts(res.data.data || []);
       setTotalContacts(res.data.count || 0);
     } catch (err) {
       console.error("Error fetching contacts:", err);

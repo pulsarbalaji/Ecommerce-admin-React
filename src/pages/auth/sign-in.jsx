@@ -26,9 +26,10 @@ export function SignIn() {
   const navigate = useNavigate();
   const { login, authData } = useContext(AuthContext);
 
+  // ✅ Redirect if already logged in
   useEffect(() => {
     if (authData?.access) {
-      navigate("/dashboard");
+      navigate("/dashboard/home");
     }
   }, [authData, navigate]);
 
@@ -54,21 +55,15 @@ export function SignIn() {
 
       const data = response.data;
 
-      if (form.remember) {
-        localStorage.setItem("access", data.access);
-        localStorage.setItem("refresh", data.refresh);
-        localStorage.setItem("admin", JSON.stringify(data.admin));
-      } else {
-        sessionStorage.setItem("access", data.access);
-        sessionStorage.setItem("refresh", data.refresh);
-        sessionStorage.setItem("admin", JSON.stringify(data.admin));
-      }
-
-      login({
-        access: data.access,
-        refresh: data.refresh,
-        admin: data.admin,
-      });
+      // ✅ Pass "remember" flag to context
+      login(
+        {
+          access: data.access,
+          refresh: data.refresh,
+          admin: data.admin,
+        },
+        form.remember
+      );
 
       navigate("/dashboard/home");
     } catch (err) {
@@ -123,15 +118,7 @@ export function SignIn() {
               onChange={handleInputChange}
               disabled={loading}
               required
-              className="
-                border border-gray-300
-                focus:border-blue-600
-                shadow-sm focus:shadow-md
-                rounded-lg
-                transition
-                duration-300
-                ease-in-out
-              "
+              className="w-full border border-gray-300 focus:border-blue-600 shadow-sm focus:shadow-md rounded-lg transition duration-300 ease-in-out"
             />
 
             {/* Password (floating label + eye icon) */}
@@ -145,17 +132,7 @@ export function SignIn() {
                 onChange={handleInputChange}
                 disabled={loading}
                 required
-                className="
-                  border border-gray-300
-                  focus:border-blue-600
-                  shadow-sm focus:shadow-md
-                  rounded-lg
-                  pr-10
-                  transition
-                  duration-300
-                  ease-in-out
-                "
-                fullWidth
+                className="w-full border border-gray-300 focus:border-blue-600 shadow-sm focus:shadow-md rounded-lg pr-10 transition duration-300 ease-in-out"
               />
               <IconButton
                 variant="text"
@@ -192,7 +169,7 @@ export function SignIn() {
             </div>
 
             {/* Submit Button */}
-            <Button className="mt-2" fullWidth type="submit" disabled={loading}>
+            <Button className="mt-2 w-full" type="submit" disabled={loading}>
               {loading ? "Logging in..." : "Sign In"}
             </Button>
           </form>
