@@ -7,11 +7,14 @@ import {
   RectangleStackIcon,
   UserGroupIcon,
   Squares2X2Icon,
+  ShoppingBagIcon,
+  TagIcon,
 } from "@heroicons/react/24/solid";
 import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
 import { SignIn, SignUp } from "@/pages/auth";
 import AdminUser from "./pages/admin/Admin";
 import Category from "./pages/category/Category";
+import Product from "./pages/product/Product";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -38,6 +41,18 @@ export const routes = [
         name: "category",
         path: "/category",
         element: <Category />,
+      },
+      {
+        icon: <ShoppingBagIcon  {...icon} />,
+        name: "Product",
+        path: "/product",
+        element: <Product />,
+      },
+      {
+        icon: <TagIcon {...icon} />,
+        name: "Offers",
+        path: "/product",
+        element: <Product />,
       },
       {
         icon: <UserCircleIcon {...icon} />,
