@@ -15,6 +15,7 @@ import { SignIn, SignUp } from "@/pages/auth";
 import AdminUser from "./pages/admin/Admin";
 import Category from "./pages/category/Category";
 import Product from "./pages/product/Product";
+import Offer from "./pages/offers/Offer";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -51,8 +52,8 @@ export const routes = [
       {
         icon: <TagIcon {...icon} />,
         name: "Offers",
-        path: "/product",
-        element: <Product />,
+        path: "/offer",
+        element: <Offer />,
       },
       {
         icon: <UserCircleIcon {...icon} />,
