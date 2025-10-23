@@ -20,6 +20,7 @@ import Category from "./pages/category/Category";
 import Product from "./pages/product/Product";
 import Offer from "./pages/offers/Offer";
 import Orders from "./pages/oders/Order";
+import ContactUs from "./pages/contactus/ContactUs";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -75,7 +76,7 @@ export const routes = [
         icon: <PhoneIcon {...icon} />,
         name: "Contact Us Details",
         path: "/contact_us",
-        element: <Orders />,
+        element: <ContactUs />,
       },
     ],
   },
