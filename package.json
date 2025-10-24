@@ -19,7 +19,9 @@
     "react-data-table-component": "^7.7.0",
     "react-dom": "18.2.0",
     "react-hot-toast": "^2.6.0",
-    "react-router-dom": "6.17.0"
+    "react-loading-skeleton": "^3.5.0",
+    "react-router-dom": "6.17.0",
+    "recharts": "^3.3.0"
   },
   "devDependencies": {
     "@types/react": "18.2.31",

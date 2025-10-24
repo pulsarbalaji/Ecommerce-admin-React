@@ -12,12 +12,12 @@ import {
   Spinner,
   Select,
   Option,
+  Switch,
 } from "@material-tailwind/react";
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import api from "@/utils/base_url";
 import toast from "react-hot-toast";
 
-// --- Reusable File Input ---
 function StyledFileInput({
   label,
   name,
@@ -81,8 +81,12 @@ function StyledFileInput({
   );
 }
 
-// --- Main Edit Product Modal ---
-export default function EditProduct({ open, handleOpenClose, productId, refresh }) {
+export default function EditProduct({
+  open,
+  handleOpenClose,
+  productId,
+  refresh,
+}) {
   const [form, setForm] = useState({
     product_name: "",
     product_description: "",
@@ -90,6 +94,7 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
     price: "",
     stock_quantity: "",
     product_image: null,
+    is_available: false,
   });
 
   const [existingImage, setExistingImage] = useState(null);
@@ -98,7 +103,6 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  // Fetch product
   useEffect(() => {
     if (!open || !productId) return;
     const fetchData = async () => {
@@ -117,6 +121,7 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
           price: productData.price,
           stock_quantity: productData.stock_quantity,
           product_image: null,
+          is_available: productData.is_available || false,
         });
         setExistingImage(productData.product_image);
         setCategories(categoryRes.data.data);
@@ -130,12 +135,11 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
   }, [productId, open]);
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
+    const { name, value, files, type, checked } = e.target;
     if (name === "product_image") {
-      setForm((prev) => ({
-        ...prev,
-        product_image: files?.length ? files[0] : null,
-      }));
+      setForm((prev) => ({ ...prev, product_image: files?.length ? files[0] : null }));
+    } else if (type === "checkbox") {
+      setForm((prev) => ({ ...prev, [name]: checked }));
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -151,6 +155,8 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
       payload.append("category", form.category);
       payload.append("price", form.price);
       payload.append("stock_quantity", form.stock_quantity);
+      payload.append("is_available", form.is_available);
+
       if (form.product_image) payload.append("product_image", form.product_image);
 
       await api.put(`product/${productId}/`, payload, {
@@ -177,11 +183,7 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
   };
 
   const backendBaseUrl = import.meta.env.VITE_API_URL;
-  const imageUrl =
-    existingImage &&
-    (existingImage.startsWith("http")
-      ? existingImage
-      : `${backendBaseUrl}${existingImage}`);
+  const imageUrl = existingImage && (existingImage.startsWith("http") ? existingImage : `${backendBaseUrl}${existingImage}`);
 
   return (
     <Dialog open={open} handler={handleOpenClose} size="lg">
@@ -192,7 +194,7 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
           </Typography>
         </DialogHeader>
 
-        <DialogBody>
+        <DialogBody className="max-h-[60vh] overflow-y-auto">
           {isLoading ? (
             <div className="flex justify-center py-10">
               <Spinner size="lg" color="blue" />
@@ -254,6 +256,18 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
                 className="md:col-span-2"
               />
 
+              <div className="md:col-span-2 flex items-center gap-2">
+                <Switch
+                  id="is_available"
+                  name="is_available"
+                  checked={form.is_available}
+                  onChange={handleChange}
+                />
+                <label htmlFor="is_available" className="text-sm font-medium text-gray-700">
+                  Available
+                </label>
+              </div>
+
               {imageUrl && !form.product_image && (
                 <div className="md:col-span-2">
                   <p className="mb-2 font-medium">Current Image:</p>
@@ -271,7 +285,7 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
         <DialogFooter className="flex justify-center gap-4">
           <Button
             variant="outlined"
-            color="blue-gray"
+            color="secondary"
             onClick={handleCancel}
             disabled={isCancelling || isSubmitting}
           >

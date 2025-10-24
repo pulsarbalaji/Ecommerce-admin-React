@@ -1,258 +1,173 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import api from "@/utils/base_url";
 import {
-  Typography,
-  Card,
-  CardHeader,
-  CardBody,
-  IconButton,
-  Menu,
-  MenuHandler,
-  MenuList,
-  MenuItem,
-  Avatar,
-  Tooltip,
-  Progress,
+  Card, CardHeader, CardBody,
+  Typography, Avatar, Progress,
 } from "@material-tailwind/react";
 import {
-  EllipsisVerticalIcon,
-  ArrowUpIcon,
-} from "@heroicons/react/24/outline";
-import { StatisticsCard } from "@/widgets/cards";
-import { StatisticsChart } from "@/widgets/charts";
-import {
-  statisticsCardsData,
-  statisticsChartsData,
-  projectsTableData,
-  ordersOverviewData,
-} from "@/data";
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  BarChart, Bar, CartesianGrid, Legend,
+} from "recharts";
+import Skeleton from "react-loading-skeleton";
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/solid";
 
-export function Home() {
-  return (
-    <div className="mt-12">
-      <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
-        {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
-          <StatisticsCard
-            key={title}
-            {...rest}
-            title={title}
-            icon={React.createElement(icon, {
-              className: "w-6 h-6 text-white",
-            })}
-            footer={
-              <Typography className="font-normal text-blue-gray-600">
-                <strong className={footer.color}>{footer.value}</strong>
-                &nbsp;{footer.label}
-              </Typography>
-            }
-          />
-        ))}
-      </div>
-      <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
-        {statisticsChartsData.map((props) => (
-          <StatisticsChart
-            key={props.title}
-            {...props}
-            footer={
-              <Typography
-                variant="small"
-                className="flex items-center font-normal text-blue-gray-600"
-              >
-                <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-                &nbsp;{props.footer}
-              </Typography>
-            }
-          />
-        ))}
-      </div>
-      <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <Card className="overflow-hidden xl:col-span-2 border border-blue-gray-100 shadow-sm">
-          <CardHeader
-            floated={false}
-            shadow={false}
-            color="transparent"
-            className="m-0 flex items-center justify-between p-6"
-          >
-            <div>
-              <Typography variant="h6" color="blue-gray" className="mb-1">
-                Projects
-              </Typography>
-              <Typography
-                variant="small"
-                className="flex items-center gap-1 font-normal text-blue-gray-600"
-              >
-                <CheckCircleIcon strokeWidth={3} className="h-4 w-4 text-blue-gray-200" />
-                <strong>30 done</strong> this month
-              </Typography>
-            </div>
-            <Menu placement="left-start">
-              <MenuHandler>
-                <IconButton size="sm" variant="text" color="blue-gray">
-                  <EllipsisVerticalIcon
-                    strokeWidth={3}
-                    fill="currenColor"
-                    className="h-6 w-6"
-                  />
-                </IconButton>
-              </MenuHandler>
-              <MenuList>
-                <MenuItem>Action</MenuItem>
-                <MenuItem>Another Action</MenuItem>
-                <MenuItem>Something else here</MenuItem>
-              </MenuList>
-            </Menu>
-          </CardHeader>
-          <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-            <table className="w-full min-w-[640px] table-auto">
-              <thead>
-                <tr>
-                  {["companies", "members", "budget", "completion"].map(
-                    (el) => (
-                      <th
-                        key={el}
-                        className="border-b border-blue-gray-50 py-3 px-6 text-left"
-                      >
-                        <Typography
-                          variant="small"
-                          className="text-[11px] font-medium uppercase text-blue-gray-400"
-                        >
-                          {el}
-                        </Typography>
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {projectsTableData.map(
-                  ({ img, name, members, budget, completion }, key) => {
-                    const className = `py-3 px-5 ${
-                      key === projectsTableData.length - 1
-                        ? ""
-                        : "border-b border-blue-gray-50"
-                    }`;
+const Home = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-                    return (
-                      <tr key={name}>
-                        <td className={className}>
-                          <div className="flex items-center gap-4">
-                            <Avatar src={img} alt={name} size="sm" />
-                            <Typography
-                              variant="small"
-                              color="blue-gray"
-                              className="font-bold"
-                            >
-                              {name}
-                            </Typography>
-                          </div>
-                        </td>
-                        <td className={className}>
-                          {members.map(({ img, name }, key) => (
-                            <Tooltip key={name} content={name}>
-                              <Avatar
-                                src={img}
-                                alt={name}
-                                size="xs"
-                                variant="circular"
-                                className={`cursor-pointer border-2 border-white ${
-                                  key === 0 ? "" : "-ml-2.5"
-                                }`}
-                              />
-                            </Tooltip>
-                          ))}
-                        </td>
-                        <td className={className}>
-                          <Typography
-                            variant="small"
-                            className="text-xs font-medium text-blue-gray-600"
-                          >
-                            {budget}
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <div className="w-10/12">
-                            <Typography
-                              variant="small"
-                              className="mb-1 block text-xs font-medium text-blue-gray-600"
-                            >
-                              {completion}%
-                            </Typography>
-                            <Progress
-                              value={completion}
-                              variant="gradient"
-                              color={completion === 100 ? "green" : "blue"}
-                              className="h-1"
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  }
-                )}
-              </tbody>
-            </table>
-          </CardBody>
-        </Card>
-        <Card className="border border-blue-gray-100 shadow-sm">
-          <CardHeader
-            floated={false}
-            shadow={false}
-            color="transparent"
-            className="m-0 p-6"
-          >
-            <Typography variant="h6" color="blue-gray" className="mb-2">
-              Orders Overview
+  const fetchDashboard = async () => {
+    try {
+      const res = await api.get("/Dashboard/");
+      if (res.data.status) setData(res.data.data);
+    } catch (err) {
+      console.error("Error fetching dashboard:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  if (loading || !data) {
+    return (
+      <div className="p-8 grid gap-6">
+        <Skeleton height={50} count={6} />
+      </div>
+    );
+  }
+
+  const {
+    stats,
+    sales_chart,
+    top_products,
+    recent_orders,
+    low_stock_products,
+    new_customers,
+  } = data;
+
+  return (
+    <div className="mt-12 space-y-10">
+      {/* --- Stats Cards --- */}
+      <div className="grid gap-6 md:grid-cols-3 xl:grid-cols-6">
+        {Object.entries(stats).map(([key, value]) => (
+          <Card key={key} className="p-4 text-center border shadow-sm">
+            <Typography className="text-gray-500 capitalize text-sm">
+              {key.replace(/_/g, " ")}
             </Typography>
-            <Typography
-              variant="small"
-              className="flex items-center gap-1 font-normal text-blue-gray-600"
-            >
-              <ArrowUpIcon
-                strokeWidth={3}
-                className="h-3.5 w-3.5 text-green-500"
-              />
-              <strong>24%</strong> this month
+            <Typography variant="h5" className="font-bold mt-1">
+              {value}
             </Typography>
-          </CardHeader>
-          <CardBody className="pt-0">
-            {ordersOverviewData.map(
-              ({ icon, color, title, description }, key) => (
-                <div key={title} className="flex items-start gap-4 py-3">
-                  <div
-                    className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${
-                      key === ordersOverviewData.length - 1
-                        ? "after:h-0"
-                        : "after:h-4/6"
-                    }`}
-                  >
-                    {React.createElement(icon, {
-                      className: `!w-5 !h-5 ${color}`,
-                    })}
-                  </div>
-                  <div>
-                    <Typography
-                      variant="small"
-                      color="blue-gray"
-                      className="block font-medium"
-                    >
-                      {title}
-                    </Typography>
-                    <Typography
-                      as="span"
-                      variant="small"
-                      className="text-xs font-medium text-blue-gray-500"
-                    >
-                      {description}
-                    </Typography>
-                  </div>
-                </div>
-              )
+          </Card>
+        ))}
+      </div>
+
+      {/* --- Sales Chart --- */}
+      <Card className="p-6 border shadow-sm">
+        <Typography variant="h6" className="mb-4">Sales (Last 7 Days)</Typography>
+        <ResponsiveContainer width="100%" height={250}>
+          <LineChart data={sales_chart}>
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Line type="monotone" dataKey="sales" stroke="#16a34a" strokeWidth={2} />
+          </LineChart>
+        </ResponsiveContainer>
+      </Card>
+
+      {/* --- Top Products --- */}
+      <Card className="p-6 border shadow-sm">
+        <Typography variant="h6" className="mb-4">Top Products</Typography>
+        <ResponsiveContainer width="100%" height={250}>
+          <BarChart data={top_products}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="product_name" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="total_sold" fill="#3b82f6" name="Sold Qty" />
+            <Bar dataKey="total_revenue" fill="#16a34a" name="Revenue" />
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      {/* --- Recent Orders Table --- */}
+      <Card className="border shadow-sm">
+        <CardHeader floated={false} shadow={false} className="px-6 py-4">
+          <Typography variant="h6">Recent Orders</Typography>
+        </CardHeader>
+        <CardBody className="overflow-x-auto">
+          <table className="w-full table-auto text-sm">
+            <thead>
+              <tr className="bg-gray-100 text-left">
+                {["Order No", "Customer", "Email", "Amount", "Status", "Date"].map(h => (
+                  <th key={h} className="px-4 py-2 font-medium text-gray-600">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {recent_orders.map(o => (
+                <tr key={o.order_number} className="hover:bg-gray-50">
+                  <td className="px-4 py-2">{o.order_number}</td>
+                  <td className="px-4 py-2">{o.customer_name}</td>
+                  <td className="px-4 py-2">{o.customer_email}</td>
+                  <td className="px-4 py-2">₹{o.total_amount}</td>
+                  <td className="px-4 py-2 capitalize">
+                    {o.order_status === "success" ? (
+                      <span className="text-green-600 font-medium">Success</span>
+                    ) : o.order_status === "pending" ? (
+                      <span className="text-yellow-600 font-medium">Pending</span>
+                    ) : (
+                      <span className="text-red-600 font-medium">Cancelled</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2">
+                    {new Date(o.ordered_at).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardBody>
+      </Card>
+
+      {/* --- Low Stock & New Customers --- */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card className="p-6 border shadow-sm">
+          <Typography variant="h6" className="mb-3">Low Stock Products</Typography>
+          <ul className="space-y-2 text-sm">
+            {low_stock_products.length ? (
+              low_stock_products.map(p => (
+                <li key={p.id}>
+                  <span className="font-medium">{p.product_name}</span> — {p.stock_quantity} left
+                </li>
+              ))
+            ) : (
+              <Typography color="gray">All products sufficiently stocked.</Typography>
             )}
-          </CardBody>
+          </ul>
+        </Card>
+
+        <Card className="p-6 border shadow-sm">
+          <Typography variant="h6" className="mb-3">New Customers</Typography>
+          <ul className="space-y-2 text-sm">
+            {new_customers.length ? (
+              new_customers.map(c => (
+                <li key={c.id}>
+                  <span className="font-medium">{c.full_name}</span> ({c.email})
+                </li>
+              ))
+            ) : (
+              <Typography color="gray">No new signups this week.</Typography>
+            )}
+          </ul>
         </Card>
       </div>
     </div>
   );
-}
+};
 
 export default Home;

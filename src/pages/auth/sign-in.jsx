@@ -68,10 +68,12 @@ export function SignIn() {
       navigate("/dashboard/home");
     } catch (err) {
       console.error("Login Error:", err);
-      setError(
-        err.response?.data?.detail ||
-          "Invalid email or password. Please try again."
-      );
+      const backendError =
+      err.response?.data?.detail ||
+      err.response?.data?.non_field_errors?.[0] || // catch DRF-style list
+      err.response?.data?.error ||
+      "Invalid email or password. Please try again.";
+      setError(backendError);
     } finally {
       setLoading(false);
     }

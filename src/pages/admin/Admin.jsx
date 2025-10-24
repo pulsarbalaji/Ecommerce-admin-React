@@ -9,6 +9,7 @@ import {
     DialogBody,
     DialogFooter,
     Spinner,
+    Typography,
 } from "@material-tailwind/react";
 import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline";
 import api from "@/utils/base_url";
@@ -134,12 +135,16 @@ export default function AdminUser() {
 
             {/* Delete Dialog */}
             <Dialog open={deleteDialogOpen} size="sm" handler={setDeleteDialogOpen}>
-                <DialogHeader>Confirm Deletion</DialogHeader>
-                <DialogBody>
-                    Are you sure you want to delete <strong>{selectedUser?.full_name}</strong>?
+                <DialogHeader className="flex justify-center">
+                    <Typography variant="h5" className="font-semibold">
+                        Confirm Deletion
+                    </Typography>
+                </DialogHeader>
+                <DialogBody  className="text-black text-base">
+                    Are you sure you want to delete <strong className="text-red-500" >{selectedUser?.full_name}</strong>?
                 </DialogBody>
-                <DialogFooter>
-                    <Button variant="text" color="gray" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+                <DialogFooter  className="flex justify-center gap-4">
+                    <Button variant="text" color="secondary" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
                     <Button color="red" onClick={deleteUser}>Delete</Button>
                 </DialogFooter>
             </Dialog>

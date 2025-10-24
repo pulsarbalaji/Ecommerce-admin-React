@@ -6,6 +6,7 @@ import {
   DialogFooter,
   Button,
   Spinner,
+  Typography,
 } from "@material-tailwind/react";
 import api from "@/utils/base_url";
 
@@ -37,7 +38,11 @@ export default function ViewContact({ open, handleOpenClose, contactId }) {
       handler={() => handleOpenClose(false)}
       className="overflow-visible"
     >
-      <DialogHeader>View Contact Us 👁️</DialogHeader>
+      <DialogHeader className="justify-center">
+                <Typography variant="h5" color="blue-gray" className="font-semibold">
+                  View Product 👁️
+                </Typography>
+              </DialogHeader>
       <DialogBody divider>
         {loading ? (
           <div className="flex justify-center items-center gap-2 py-6">
@@ -65,10 +70,10 @@ export default function ViewContact({ open, handleOpenClose, contactId }) {
           </div>
         )}
       </DialogBody>
-      <DialogFooter>
+      <DialogFooter className="justify-center">
         <Button
           variant="outlined"
-          color="blue-gray"
+          color="secondary"
           onClick={() => handleOpenClose(false)}
         >
           Back

@@ -9,8 +9,9 @@ import {
   PhoneIcon,
   UsersIcon,
 } from "@heroicons/react/24/solid";
-import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
-import { SignIn, SignUp } from "@/pages/auth";
+import Home from "./pages/dashboard/Home";
+
+import { SignIn } from "@/pages/auth";
 import AdminUser from "./pages/admin/Admin";
 import Category from "./pages/category/Category";
 import Product from "./pages/product/Product";

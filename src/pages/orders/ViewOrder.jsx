@@ -6,6 +6,7 @@ import {
   Button,
   Spinner,
   Chip,
+  Typography,
 } from "@material-tailwind/react";
 import api from "@/utils/base_url";
 
@@ -110,9 +111,11 @@ export default function ViewOrder({ orderId, open, handleOpenClose }) {
       handler={handleOpenClose}
       className="bg-white p-0"
     >
-      <DialogHeader>
-        Order Details 👁️
-      </DialogHeader>
+      <DialogHeader className="justify-center">
+                <Typography variant="h5" color="blue-gray" className="font-semibold">
+                  View Product 👁️
+                </Typography>
+              </DialogHeader>
       <DialogBody divider>
         {loading ? (
           <div className="text-center py-6 flex justify-center items-center gap-2">
@@ -233,13 +236,13 @@ export default function ViewOrder({ orderId, open, handleOpenClose }) {
             <div className="flex justify-center gap-4 mt-6">
               <Button
                 variant="outlined"
-                color="blue-gray"
+                color="secondary"
                 onClick={() => handleOpenClose(false)}
               >
                 Close
               </Button>
               <Button
-                color="blue"
+                color="gray"
                 onClick={downloadInvoice}
                 disabled={downloading}
               >

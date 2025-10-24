@@ -237,7 +237,7 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
         <DialogFooter className="flex justify-center gap-4">
           <Button
             variant="outlined"
-            color="blue-gray"
+            color="secondary"
             onClick={handleCancel}
             disabled={isCancelling || isSubmitting}
           >

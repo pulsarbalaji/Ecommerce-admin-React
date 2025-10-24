@@ -9,6 +9,7 @@ import {
   DialogBody,
   DialogFooter,
   Spinner,
+  Typography,
 } from "@material-tailwind/react";
 import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline";
 import api from "@/utils/base_url";
@@ -94,11 +95,10 @@ export default function Product() {
       sortable: true,
       cell: (row) => (
         <span
-          className={`px-2 py-1 text-xs rounded-full ${
-            row.stock_quantity > 0
+          className={`px-2 py-1 text-xs rounded-full ${row.stock_quantity > 0
               ? "bg-green-100 text-green-800"
               : "bg-red-100 text-red-700"
-          }`}
+            }`}
         >
           {row.stock_quantity > 0 ? `${row.stock_quantity}` : "Out of stock"}
         </span>
@@ -108,11 +108,10 @@ export default function Product() {
       name: "Availability",
       cell: (row) => (
         <span
-          className={`px-2 py-1 text-xs rounded-full ${
-            row.is_available
+          className={`px-2 py-1 text-xs rounded-full ${row.is_available
               ? "bg-green-100 text-green-700"
               : "bg-red-100 text-red-700"
-          }`}
+            }`}
         >
           {row.is_available ? "Available" : "Not Available"}
         </span>
@@ -210,15 +209,19 @@ export default function Product() {
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} size="sm" handler={setDeleteDialogOpen}>
-        <DialogHeader>Confirm Deletion</DialogHeader>
-        <DialogBody>
+        <DialogHeader className="flex justify-center">
+          <Typography variant="h5" className="font-semibold">
+            Confirm Deletion
+          </Typography>
+        </DialogHeader>
+        <DialogBody  className="text-black text-base">
           Are you sure you want to delete{" "}
-          <strong>{selectedProduct?.product_name}</strong>?
+          <strong className="text-red-500">{selectedProduct?.product_name}</strong>?
         </DialogBody>
-        <DialogFooter>
+        <DialogFooter  className="flex justify-center gap-4">
           <Button
             variant="text"
-            color="gray"
+            color="secondary"
             onClick={() => setDeleteDialogOpen(false)}
           >
             Cancel

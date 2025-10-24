@@ -7,6 +7,7 @@ import {
   Select,
   Option,
   Spinner,
+  Typography,
 } from "@material-tailwind/react";
 import api from "@/utils/base_url";
 
@@ -62,7 +63,11 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
 
   return (
     <Dialog size="md" open={open} handler={handleOpenClose}>
-      <DialogHeader>Update Order Status 🔄</DialogHeader>
+      <DialogHeader  className="flex justify-center">
+          <Typography variant="h5" className="font-semibold">
+            Update Order Status 🔄
+          </Typography>
+        </DialogHeader>
       <DialogBody divider>
         {loading ? (
           <div className="text-center py-6 flex justify-center items-center gap-2">
@@ -74,7 +79,7 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
         ) : order ? (
           <div className="space-y-4">
             {/* Order Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
               <div>
                 <strong>Order Number:</strong> {order.order_number}
               </div>
@@ -109,13 +114,13 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
             <div className="flex justify-center gap-4 mt-4">
               <Button
                 variant="outlined"
-                color="blue-gray"
+                color="secondary"
                 onClick={() => handleOpenClose(false)}
               >
                 Cancel
               </Button>
               <Button
-                color="blue"
+                color="gray"
                 onClick={updateStatus}
                 disabled={updating}
                 loading={updating}
