@@ -59,7 +59,7 @@ const ResetPassword = () => {
         token,
         new_password: password,
       });
-      toast("Password reset successful!");
+      toast.success("Password reset successful!");
       navigate("/auth/sign-in");
     } catch (err) {
       setError(err.response?.data?.detail || "Reset failed. Please try again.");

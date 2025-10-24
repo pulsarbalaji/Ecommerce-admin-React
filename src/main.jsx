@@ -6,6 +6,7 @@ import { ThemeProvider } from "@material-tailwind/react";
 import { MaterialTailwindControllerProvider } from "@/context";
 import "../public/css/tailwind.css";
 import { AuthProvider } from "../src/context/AuthContext";
+import { Toaster } from "react-hot-toast";
 
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         </MaterialTailwindControllerProvider>
       </ThemeProvider>
       </AuthProvider>
+    <Toaster />
     </BrowserRouter>
   </React.StrictMode>
 );

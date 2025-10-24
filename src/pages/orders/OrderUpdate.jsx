@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@material-tailwind/react";
 import api from "@/utils/base_url";
+import toast from "react-hot-toast";
 
 export default function OrderUpdate({ orderId, open, handleOpenClose, refresh }) {
   const id = orderId;
@@ -46,12 +47,12 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
     setUpdating(true);
     try {
       await api.put(`order-status/${id}/`, { order_status: order.status });
-      alert("Order status updated successfully");
+      toast.success("Order status updated successfully");
       if (refresh) refresh(); // refresh orders list
       handleOpenClose(false);
     } catch (err) {
       console.error("Failed to update status:", err);
-      alert("Failed to update status");
+      toast.error("Failed to update status");
     } finally {
       setUpdating(false);
     }
