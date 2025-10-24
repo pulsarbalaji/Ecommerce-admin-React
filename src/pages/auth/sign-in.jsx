@@ -163,7 +163,7 @@ export function SignIn() {
                 disabled={loading}
               />
               <Link
-                to="/forgot-password"
+                to="/auth/forgot-password"
                 className="text-sm text-blue-600 hover:underline"
               >
                 Forgot Password?

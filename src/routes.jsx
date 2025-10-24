@@ -19,6 +19,8 @@ import Offer from "./pages/offers/Offer";
 import Orders from "./pages/orders/Order";
 import ContactUs from "./pages/contactus/ContactUs";
 import Customers from "./pages/customer/Customer";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -88,6 +90,16 @@ export const routes = [
         path: "/sign-in",
         element: <SignIn />,
       },
+       {
+      name: "forgot password",
+      path: "/forgot-password",
+      element: <ForgotPassword />,
+    },
+    {
+      name: "reset password",
+      path: "/reset-password/:uid/:token",
+      element: <ResetPassword />,
+    },
     ],
   },
 ];
