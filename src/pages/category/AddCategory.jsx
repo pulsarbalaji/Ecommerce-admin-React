@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
     Dialog,
     DialogHeader,
@@ -102,6 +102,23 @@ export default function AddCategory({ open, handleOpenClose, refresh }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isCancelling, setIsCancelling] = useState(false);
 
+    const resetForm = () => {
+        setForm({
+            category_name: "",
+            description: "",
+            category_image: null,
+        });
+    };
+
+    // Automatically reset when modal closes
+    useEffect(() => {
+        if (!open) {
+            resetForm();
+            setIsSubmitting(false);
+            setIsCancelling(false);
+        }
+    }, [open]);
+
     // Handle input changes
     const handleChange = (e) => {
         const { name, value, files } = e.target;
@@ -146,23 +163,42 @@ export default function AddCategory({ open, handleOpenClose, refresh }) {
             const payload = new FormData();
             payload.append("category_name", form.category_name);
             payload.append("description", form.description);
-            if (form.category_image) payload.append("category_image", form.category_image);
+            if (form.category_image)
+                payload.append("category_image", form.category_image);
 
-            await api.post("categories/", payload, {
+            const res = await api.post("categories/", payload, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
 
-            toast.success("Category added successfully!");
+            // ✅ Success
+            toast.success(res.data?.message || "Category added successfully!");
             handleOpenClose(false);
             refresh?.();
             setForm({ category_name: "", description: "", category_image: null });
         } catch (err) {
             console.error("Error adding category:", err);
-            toast.error("Failed to add category.");
+
+            // ✅ Get detailed backend error message
+            const errorMessage =
+                err.response?.data?.message ||
+                err.response?.data?.errors ||
+                "Failed to add category.";
+
+            // If backend sends {status:false,message:"Category already exists"}
+            if (typeof errorMessage === "string") {
+                toast.error(errorMessage);
+            } else if (typeof errorMessage === "object") {
+                // Handle serializer validation errors
+                const firstError = Object.values(errorMessage)[0];
+                toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
+            } else {
+                toast.error("Something went wrong. Please try again.");
+            }
         } finally {
             setIsSubmitting(false);
         }
     };
+
 
     const handleCancel = () => {
         setIsCancelling(true);

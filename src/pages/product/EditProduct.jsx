@@ -29,6 +29,7 @@ function StyledFileInput({
   helperText,
 }) {
   const inputRef = useRef(null);
+  const [focused, setFocused] = useState(true);
   const [fileName, setFileName] = useState(value?.name || "");
 
   const handleInputChange = (e) => {
@@ -36,6 +37,7 @@ function StyledFileInput({
     setFileName(file ? file.name : "");
     onChange({ target: { name, files: file ? [file] : null } });
   };
+  const floated = !!fileName || focused;
 
   return (
     <div className="relative w-full">
@@ -45,12 +47,21 @@ function StyledFileInput({
         accept={accept}
         className="absolute inset-0 opacity-0 cursor-pointer"
         onChange={handleInputChange}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(true)}
         required={required}
       />
+         <label
+        className={`absolute left-3 transition-all duration-200 select-none pointer-events-none text-gray-500
+          ${floated ? "text-xs -top-3.5 bg-white px-1" : "top-3"}
+          peer-focus:text-blue-gray-600 peer-focus:-top-3.5 peer-focus:text-xs`}
+      >
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </label>
       <div
-        className={`border rounded-md w-full px-3 py-2 flex items-center gap-2 bg-white ${
-          error ? "border-red-500" : "border-gray-300"
-        }`}
+        className={`border rounded-md w-full px-3 py-2 flex items-center gap-2 bg-white ${error ? "border-red-500" : "border-gray-300"
+          }`}
         onClick={() => inputRef.current?.click()}
       >
         <PhotoIcon className="h-6 w-6 text-blue-gray-400" />
@@ -227,6 +238,7 @@ export default function EditProduct({
                 name="price"
                 type="number"
                 value={form.price}
+                min="0"
                 onChange={handleChange}
                 required
               />
@@ -235,38 +247,42 @@ export default function EditProduct({
                 label="Stock Quantity"
                 name="stock_quantity"
                 type="number"
+                min="0"
                 value={form.stock_quantity}
                 onChange={handleChange}
                 required
               />
-
+<div className="md:col-span-1">
               <StyledFileInput
                 label="Product Image"
                 name="product_image"
                 value={form.product_image}
                 onChange={handleChange}
+                required={true}
               />
-
-              <Textarea
-                label="Description"
-                name="product_description"
-                value={form.product_description}
-                onChange={handleChange}
-                rows={6}
-                className="md:col-span-2"
-              />
-
-              <div className="md:col-span-2 flex items-center gap-2">
-                <Switch
-                  id="is_available"
-                  name="is_available"
-                  checked={form.is_available}
-                  onChange={handleChange}
-                />
-                <label htmlFor="is_available" className="text-sm font-medium text-gray-700">
-                  Available
-                </label>
               </div>
+              <Switch
+                id="is_available"
+                name="is_available"
+                checked={form.is_available}
+                onChange={handleChange}
+              />
+              <label htmlFor="is_available" className="text-sm font-medium text-gray-700">
+                Available
+              </label>
+              <div className="md:col-span-2 flex items-center gap-2">
+                <Textarea
+                  label="Description"
+                  name="product_description"
+                  value={form.product_description}
+                  onChange={handleChange}
+                  rows={6}
+                  className="md:col-span-2"
+                />
+
+              </div>
+
+
 
               {imageUrl && !form.product_image && (
                 <div className="md:col-span-2">

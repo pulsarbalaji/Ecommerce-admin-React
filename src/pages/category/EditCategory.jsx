@@ -136,29 +136,47 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
     : null;
 
   // Submit update
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      const payload = new FormData();
-      payload.append("category_name", form.category_name);
-      payload.append("description", form.description);
-      if (form.category_image) payload.append("category_image", form.category_image);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
 
-      await api.put(`categories/${categoryId}/`, payload, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+  try {
+    const payload = new FormData();
+    payload.append("category_name", form.category_name);
+    payload.append("description", form.description);
+    if (form.category_image)
+      payload.append("category_image", form.category_image);
 
-      toast.success("Category updated successfully!");
-      refresh?.();
-      handleOpenClose(false);
-    } catch (err) {
-      console.error(err);
-      toast.error("Error updating category");
-    } finally {
-      setIsSubmitting(false);
+    const res = await api.put(`categories/${categoryId}/`, payload, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    toast.success(res.data?.message || "Category updated successfully!");
+    refresh?.();
+    handleOpenClose(false);
+  } catch (err) {
+    console.error("Error updating category:", err);
+
+
+    const errorMessage =
+      err.response?.data?.message ||
+      err.response?.data?.errors ||
+      "Failed to update category.";
+
+    if (typeof errorMessage === "string") {
+    
+      toast.error(errorMessage);
+    } else if (typeof errorMessage === "object") {
+ 
+      const firstError = Object.values(errorMessage)[0];
+      toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
+    } else {
+      toast.error("Something went wrong. Please try again.");
     }
-  };
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleCancel = () => {
     setIsCancelling(true);
@@ -200,7 +218,7 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
                   label="Category Image"
                   value={form.category_image}
                   onChange={handleChange}
-                  required={false}
+                  required={true}
                   error={
                     form.category_image &&
                     !["image/jpeg", "image/png", "image/webp"].includes(form.category_image.type)

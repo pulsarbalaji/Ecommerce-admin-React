@@ -4,7 +4,6 @@ import {
   Input,
   Button,
   Typography,
-  Checkbox,
   IconButton,
   Spinner,
 } from "@material-tailwind/react";
@@ -17,16 +16,15 @@ export function SignIn() {
   const [form, setForm] = useState({
     email: "",
     password: "",
-    remember: false,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
-  const { login, authData } = useContext(AuthContext);
+  const { authData } = useContext(AuthContext);
 
-  // ✅ Redirect if already logged in
+  // Redirect if already logged in
   useEffect(() => {
     if (authData?.access) {
       navigate("/dashboard/home");
@@ -34,10 +32,10 @@ export function SignIn() {
   }, [authData, navigate]);
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
   };
 
@@ -55,25 +53,19 @@ export function SignIn() {
 
       const data = response.data;
 
-      // ✅ Pass "remember" flag to context
-      login(
-        {
-          access: data.access,
-          refresh: data.refresh,
-          admin: data.admin,
-        },
-        form.remember
-      );
-
-      navigate("/dashboard/home");
+      if (data?.session_id) {
+        // Redirect to OTP verification
+        navigate("/auth/verify-otp", {
+          state: { session_id: data.session_id, email: form.email },
+        });
+      } else {
+        throw new Error(data?.message || "Something went wrong");
+      }
     } catch (err) {
-      console.error("Login Error:", err);
-      const backendError =
-      err.response?.data?.detail ||
-      err.response?.data?.non_field_errors?.[0] || // catch DRF-style list
-      err.response?.data?.error ||
-      "Invalid email or password. Please try again.";
-      setError(backendError);
+      setError(
+        err.response?.data?.detail ||
+        "Invalid email or password. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -81,7 +73,6 @@ export function SignIn() {
 
   return (
     <section className="flex flex-col lg:flex-row min-h-screen">
-      {/* ===== Left Form Section ===== */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 lg:px-20">
         <div className="text-center mb-10">
           <Typography variant="h2" className="font-bold mb-2">
@@ -110,7 +101,7 @@ export function SignIn() {
               </Typography>
             )}
 
-            {/* Email (floating label) */}
+            {/* Email */}
             <Input
               label="Email Address"
               size="lg"
@@ -123,7 +114,7 @@ export function SignIn() {
               className="w-full border border-gray-300 focus:border-blue-600 shadow-sm focus:shadow-md rounded-lg transition duration-300 ease-in-out"
             />
 
-            {/* Password (floating label + eye icon) */}
+            {/* Password */}
             <div className="relative w-full">
               <Input
                 label="Password"
@@ -145,23 +136,12 @@ export function SignIn() {
                 tabIndex={-1}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? (
-                  <EyeSlashIcon className="w-5 h-5" />
-                ) : (
-                  <EyeIcon className="w-5 h-5" />
-                )}
+                {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
               </IconButton>
             </div>
 
-            {/* Remember Me + Forgot Password */}
-            <div className="flex items-center justify-between -mt-2">
-              <Checkbox
-                label="Remember Me"
-                name="remember"
-                checked={form.remember}
-                onChange={handleInputChange}
-                disabled={loading}
-              />
+            {/* Forgot Password */}
+            <div className="flex justify-end -mt-2">
               <Link
                 to="/auth/forgot-password"
                 className="text-sm text-blue-600 hover:underline"
@@ -178,7 +158,7 @@ export function SignIn() {
         </Card>
       </div>
 
-      {/* ===== Right Image Section ===== */}
+      {/* Right Image */}
       <div
         className="hidden lg:block lg:flex-1"
         style={{

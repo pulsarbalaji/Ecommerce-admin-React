@@ -7,19 +7,21 @@ import { MaterialTailwindControllerProvider } from "@/context";
 import "../public/css/tailwind.css";
 import { AuthProvider } from "../src/context/AuthContext";
 import { Toaster } from "react-hot-toast";
+import ToastContainer from "../src/widgets/layout/ToastContainer";
 
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
-    <AuthProvider>
-      <ThemeProvider>
-        <MaterialTailwindControllerProvider>
-          <App />
-        </MaterialTailwindControllerProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <MaterialTailwindControllerProvider>
+            <App />
+          </MaterialTailwindControllerProvider>
+        </ThemeProvider>
       </AuthProvider>
-    <Toaster />
+      <ToastContainer/>
     </BrowserRouter>
   </React.StrictMode>
 );
+

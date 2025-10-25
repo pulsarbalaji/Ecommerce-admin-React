@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 import api from "@/utils/base_url";
 import toast from "react-hot-toast";
 
-// ✅ Styled file input reused from your AddCategory
+// ✅ Styled file input (unchanged)
 function StyledFileInput({ label, value, onChange, required, error, helperText, accept = "image/*" }) {
   const inputRef = useRef(null);
   const [focused, setFocused] = useState(true);
@@ -107,8 +107,9 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
   const [categories, setCategories] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  // ✅ Fetch categories from backend
+  // ✅ Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -121,22 +122,39 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
     fetchCategories();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "product_image") {
-      setForm((prev) => ({ ...prev, product_image: files && files.length ? files[0] : null }));
-    } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
+  // ✅ Form validation
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!form.product_name.trim()) newErrors.product_name = "Product name is required.";
+    if (!form.category) newErrors.category = "Category is required.";
+    if (!form.price) newErrors.price = "Price is required.";
+    else if (parseFloat(form.price) <= 0) newErrors.price = "Price must be greater than zero.";
+
+    if (!form.stock_quantity) newErrors.stock_quantity = "Stock quantity is required.";
+    else if (parseInt(form.stock_quantity) < 0)
+      newErrors.stock_quantity = "Stock quantity cannot be negative.";
+
+    if (!form.product_image) newErrors.product_image = "Product image is required.";
+    else if (!["image/jpeg", "image/png", "image/webp"].includes(form.product_image.type))
+      newErrors.product_image = "Only JPEG, PNG, or WEBP images are allowed.";
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      const firstError = Object.values(newErrors)[0];
+      toast.error(firstError);
+      return false;
     }
+    return true;
   };
 
-  const validateForm = () => {
-    if (!form.product_name) return toast.error("Product name is required");
-    if (!form.category) return toast.error("Category is required");
-    if (!form.price) return toast.error("Price is required");
-    if (!form.stock_quantity) return toast.error("Stock quantity is required");
-    if (!form.product_image) return toast.error("Product image is required");
-    return true;
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: name === "product_image" ? (files ? files[0] : null) : value,
+    }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined })); // clear field error on change
   };
 
   const handleSubmit = async (e) => {
@@ -158,7 +176,7 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      toast.success("Product added successfully!");
+      toast.success("✅ Product added successfully!");
       handleOpenClose(false);
       refresh?.();
       setForm({
@@ -169,9 +187,10 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
         stock_quantity: "",
         product_image: null,
       });
+      setErrors({});
     } catch (err) {
       console.error("Error adding product:", err);
-      toast.error("Failed to add product");
+      toast.error("❌ Failed to add product.");
     } finally {
       setIsSubmitting(false);
     }
@@ -181,8 +200,17 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
     setIsCancelling(true);
     setTimeout(() => {
       handleOpenClose(false);
+      setForm({
+        product_name: "",
+        product_description: "",
+        category: "",
+        price: "",
+        stock_quantity: "",
+        product_image: null,
+      });
+      setErrors({});
       setIsCancelling(false);
-    }, 500);
+    }, 400);
   };
 
   return (
@@ -196,23 +224,18 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
 
         <DialogBody>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Product Name */}
             <Input
               label="Product Name"
               name="product_name"
               value={form.product_name}
               onChange={handleChange}
-              required
-              fullWidth
+              error={!!errors.product_name}
             />
-
-            {/* Category */}
-            <div className="w-full">
+            <div>
               <Select
                 label="Select Category"
                 value={form.category}
                 onChange={(val) => setForm((p) => ({ ...p, category: val }))}
-                required
               >
                 {categories.map((cat) => (
                   <Option key={cat.id} value={cat.id}>
@@ -220,42 +243,40 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
                   </Option>
                 ))}
               </Select>
+              {errors.category && (
+                <Typography variant="small" color="red" className="mt-1">
+                  {errors.category}
+                </Typography>
+              )}
             </div>
 
-            {/* Product Image */}
             <StyledFileInput
               label="Product Image"
               value={form.product_image}
               onChange={handleChange}
               required
-              error={
-                form.product_image &&
-                !["image/jpeg", "image/png", "image/webp"].includes(form.product_image.type)
-              }
-              helperText="Only JPEG, PNG, or WEBP images allowed"
+              error={!!errors.product_image}
+              helperText={errors.product_image}
             />
 
-            {/* Price */}
             <Input
               label="Price"
               name="price"
               type="number"
+              min="0"
               value={form.price}
               onChange={handleChange}
-              required
+              error={!!errors.price}
             />
-
-            {/* Stock Quantity */}
             <Input
               label="Stock Quantity"
               name="stock_quantity"
               type="number"
+              min="0"
               value={form.stock_quantity}
               onChange={handleChange}
-              required
+              error={!!errors.stock_quantity}
             />
-
-            {/* Description */}
             <div className="md:col-span-2">
               <Textarea
                 label="Description"
@@ -278,7 +299,6 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
             {isCancelling ? "Cancelling..." : "Cancel"}
           </Button>
           <Button
-            type="submit"
             onClick={handleSubmit}
             color="gray"
             disabled={isSubmitting || isCancelling}

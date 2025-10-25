@@ -9,13 +9,11 @@ export const AuthProvider = ({ children }) => {
     admin: null,
   });
 
+  // ✅ Always load from sessionStorage only
   useEffect(() => {
-    const storedAccess =
-      sessionStorage.getItem("access") || localStorage.getItem("access");
-    const storedRefresh =
-      sessionStorage.getItem("refresh") || localStorage.getItem("refresh");
-    const storedAdmin =
-      sessionStorage.getItem("admin") || localStorage.getItem("admin");
+    const storedAccess = sessionStorage.getItem("access");
+    const storedRefresh = sessionStorage.getItem("refresh");
+    const storedAdmin = sessionStorage.getItem("admin");
 
     if (storedAccess && storedRefresh && storedAdmin) {
       setAuthData({
@@ -26,20 +24,15 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // ✅ Login function (stores to correct place)
-  const login = (data, remember = false) => {
-    const storage = remember ? localStorage : sessionStorage;
-
-    storage.setItem("access", data.access);
-    storage.setItem("refresh", data.refresh);
-    storage.setItem("admin", JSON.stringify(data.admin));
-
+  // ✅ Mandatory sessionStorage
+  const login = (data) => {
+    sessionStorage.setItem("access", data.access);
+    sessionStorage.setItem("refresh", data.refresh);
+    sessionStorage.setItem("admin", JSON.stringify(data.admin));
     setAuthData(data);
   };
 
-  // ✅ Logout function (clears all)
   const logout = () => {
-    localStorage.clear();
     sessionStorage.clear();
     setAuthData({ access: null, refresh: null, admin: null });
   };
@@ -51,7 +44,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// ✅ Custom Hook (for easy import)
+// ✅ Custom hook
 export const useAuth = () => useContext(AuthContext);
 
 export default AuthContext;

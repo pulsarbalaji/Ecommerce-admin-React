@@ -63,14 +63,15 @@ export default function ViewProduct({ open, handleOpenClose, productId }) {
 
   return (
     <Dialog open={open} handler={handleOpenClose} size="md">
-      <Card className="p-6 rounded-2xl shadow-lg">
-        <DialogHeader className="justify-center">
+      <Card className="p-6 rounded-2xl shadow-lg max-h-[80vh] overflow-hidden">
+        <DialogHeader className="justify-center sticky top-0 bg-white z-10 pb-2 border-b">
           <Typography variant="h5" color="blue-gray" className="font-semibold">
             View Product 👁️
           </Typography>
         </DialogHeader>
 
-        <DialogBody>
+        {/* ✅ Scrollable content */}
+        <DialogBody className="overflow-y-auto max-h-[60vh] pr-2">
           {loading ? (
             <div className="flex justify-center py-10">
               <Spinner size="lg" color="blue" />
@@ -124,13 +125,13 @@ export default function ViewProduct({ open, handleOpenClose, productId }) {
               )}
             </div>
           ) : null}
-
-          <div className="flex justify-center mt-6">
-            <Button color="secondary" variant="outlined" onClick={goBack}>
-              Back
-            </Button>
-          </div>
         </DialogBody>
+
+        <div className="flex justify-center mt-4">
+          <Button color="secondary" variant="outlined" onClick={goBack}>
+            Back
+          </Button>
+        </div>
       </Card>
     </Dialog>
   );

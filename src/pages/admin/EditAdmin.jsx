@@ -13,6 +13,7 @@ import {
   Spinner,
 } from "@material-tailwind/react";
 import api from "@/utils/base_url";
+import toast from "react-hot-toast";
 
 export default function EditAdmin({ open, handleOpenClose, userId }) {
   const [form, setForm] = useState({
@@ -26,7 +27,7 @@ export default function EditAdmin({ open, handleOpenClose, userId }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [snackbar, setSnackbar] = useState({ show: false, text: "", color: "green" });
 
-  const roles = ["Admin", "Manager", "Staff"];
+  const roles = ["Admin"];
 
   // Fetch user data when modal opens
   useEffect(() => {
@@ -49,26 +50,45 @@ export default function EditAdmin({ open, handleOpenClose, userId }) {
     setTimeout(() => setSnackbar({ show: false, text: "", color }), 3000);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
 
-    if (!form.full_name || !form.email || !form.role) {
-      showSnackbar("Please fill all required fields.", "red");
-      setIsSubmitting(false);
-      return;
-    }
 
-    try {
-      await api.put(`adminsdetails/${userId}/`, form);
-      showSnackbar("User updated successfully!", "green");
-      setTimeout(() => handleOpenClose(false), 1500);
-    } catch {
-      showSnackbar("Error updating user.", "red");
-    } finally {
-      setIsSubmitting(false);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+
+  if (!form.full_name || !form.email || !form.role) {
+    toast.error("Please fill all required fields.");
+    setIsSubmitting(false);
+    return;
+  }
+
+  try {
+    const res = await api.put(`adminsdetails/${userId}/`, form);
+
+    toast.success(res.data?.message || "User updated successfully!");
+    setTimeout(() => handleOpenClose(false), 1500);
+  } catch (err) {
+    console.error("Error updating user:", err);
+
+    // ✅ Extract backend error message
+    const errorMessage =
+      err.response?.data?.message ||
+      err.response?.data?.errors ||
+      "Failed to update user.";
+
+    if (typeof errorMessage === "string") {
+      toast.error(errorMessage);
+    } else if (typeof errorMessage === "object") {
+      const firstError = Object.values(errorMessage)[0];
+      toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
+    } else {
+      toast.error("Something went wrong. Please try again.");
     }
-  };
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   const handleCancel = () => handleOpenClose(false);
 

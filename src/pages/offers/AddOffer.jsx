@@ -33,6 +33,24 @@ export default function AddOffer({ open, handleOpenClose, refresh }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
+  const resetForm = () => {
+    setForm({
+      category: "",
+      product: "",
+      offer_name: "",
+      offer_percentage: "",
+      is_active: true,
+    });
+  };
+
+  // Automatically reset when modal closes
+  useEffect(() => {
+    if (!open) {
+      resetForm();
+      setIsSubmitting(false);
+      setIsCancelling(false);
+    }
+  }, [open]);
   // Fetch categories on mount
   useEffect(() => {
     const fetchCategories = async () => {

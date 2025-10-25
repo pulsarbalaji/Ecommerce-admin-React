@@ -48,20 +48,32 @@ export default function Product() {
   }, []);
 
   // Delete Product
-  const deleteProduct = async () => {
-    if (!selectedProduct) return;
-    try {
-      await api.delete(`products/${selectedProduct.id}/`);
-      setProducts(products.filter((p) => p.id !== selectedProduct.id));
-      setDeleteDialogOpen(false);
-      setSelectedProduct(null);
-    } catch (err) {
-      console.error("Error deleting product:", err);
-    }
-  };
+ const deleteProduct = async () => {
+  if (!selectedProduct) return;
+
+  try {
+    const res = await api.delete(`product/${selectedProduct.id}/`);
+    toast.success(res.data?.message || "Product deleted successfully!");
+    setProducts(products.filter((p) => p.id !== selectedProduct.id));
+    setDeleteDialogOpen(false);
+    setSelectedProduct(null);
+  } catch (err) {
+    console.error("Error deleting product:", err);
+    const errorMessage =
+      err.response?.data?.message ||
+      err.response?.data?.detail ||
+      "Failed to delete product. Please try again.";
+    toast.error(errorMessage);
+  }
+};
 
   // Table Columns
   const columns = [
+    {
+      name: "Category Name",
+      selector: (row) => row.category_name,
+      sortable: true,
+    },
     {
       name: "Product Name",
       selector: (row) => row.product_name,
@@ -72,9 +84,11 @@ export default function Product() {
       cell: (row) => (
         <img
           src={
-            row.product_image?.startsWith("http")
+            row.product_image
+            ?row.product_image?.startsWith("http")
               ? row.product_image
               : `${backendBaseUrl}${row.product_image}`
+            : "/img/No-image.jpg"
           }
           alt={row.product_name || "Product"}
           className="h-10 w-10 rounded object-cover"
