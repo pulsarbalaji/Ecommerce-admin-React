@@ -93,7 +93,7 @@ export default function AddAdmin({ open, handleOpenClose }) {
       });
 
       if (response.status === 201 || response.status === 200) {
-        toast.success("User added successfully!");
+        toast.success("Admin added successfully. Password setup email sent");
         setTimeout(() => {
           handleOpenClose(false);
           navigate("/dashboard/AdminUser");
@@ -127,7 +127,7 @@ export default function AddAdmin({ open, handleOpenClose }) {
       <Card className="p-6 rounded-2xl shadow-lg">
         <DialogHeader className="flex justify-center">
           <Typography variant="h5" color="gray" className="font-semibold">
-            Add Admin User 👤
+            Add Admin User 
           </Typography>
         </DialogHeader>
 

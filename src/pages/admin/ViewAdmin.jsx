@@ -40,7 +40,7 @@ export default function ViewAdmin({ open, handleOpenClose, userId }) {
       <Card className="p-6 rounded-2xl shadow-lg">
         <DialogHeader  className="flex justify-center">
           <Typography variant="h5" className="font-semibold">
-            View User 👁️
+            View User 
           </Typography>
         </DialogHeader>
 

@@ -10,8 +10,9 @@ import {
   DialogFooter,
   Spinner,
   Typography,
+  Input,
 } from "@material-tailwind/react";
-import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, TrashIcon, EyeIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import api from "@/utils/base_url";
 import AddAdmin from "./AddAdmin";
@@ -20,6 +21,8 @@ import ViewAdmin from "./ViewAdmin";
 
 export default function AdminUser() {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -33,7 +36,9 @@ export default function AdminUser() {
     setLoading(true);
     try {
       const response = await api.get("adminsdetails/");
-      setUsers(response.data.data || []);
+      const data = response.data.data || [];
+      setUsers(data);
+      setFilteredUsers(data);
     } catch (err) {
       console.error("Fetch Users Error:", err);
       toast.error("Failed to fetch users. Please try again later.");
@@ -46,24 +51,48 @@ export default function AdminUser() {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    if (!search.trim()) {
+      setFilteredUsers(users);
+      return;
+    }
+    const lower = search.toLowerCase();
+    setFilteredUsers(
+      users.filter(
+        (u) =>
+          u.full_name?.toLowerCase().includes(lower) ||
+          u.email?.toLowerCase().includes(lower) ||
+          u.phone?.toLowerCase().includes(lower) ||
+          u.role?.toLowerCase().includes(lower)
+      )
+    );
+  }, [search, users]);
+
   const deleteUser = async () => {
     if (!selectedUser) return;
-    toast.loading("Deleting user...");
+    const toastId = toast.loading("Deleting user...");
     try {
-      await api.delete(`adminsdetails/${selectedUser.id}/`);
-      setUsers(users.filter((u) => u.id !== selectedUser.id));
-      toast.dismiss();
-      toast.success("User deleted successfully!");
-      setDeleteDialogOpen(false);
-      setSelectedUser(null);
+      const res = await api.delete(`adminsdetails/${selectedUser.id}/`);
+
+      if (res.data?.status === true) {
+        setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
+        setDeleteDialogOpen(false);
+        setSelectedUser(null);
+
+        toast.success(res.data?.message || "User deleted successfully!", { id: toastId });
+      } else {
+        throw new Error(res.data?.message || "Failed to delete user.");
+      }
     } catch (err) {
       console.error("Delete Error:", err);
-      toast.dismiss();
+      toast.dismiss(toastId);
       const msg =
         err.response?.data?.message ||
         err.response?.data?.error ||
-        "Failed to delete user.";
-      toast.error(msg);
+        err.message ||
+        "Something went wrong while deleting user.";
+
+      toast.error(msg, { id: toastId });
     }
   };
 
@@ -118,12 +147,21 @@ export default function AdminUser() {
     <div className="min-h-screen bg-white p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-2xl font-bold text-blue-gray-800">
-          Admin Users List
-        </h3>
-        <Button color="gray" onClick={() => setAddOpen(true)}>
-          + Add User
-        </Button>
+        <h3 className="text-2xl font-bold text-blue-gray-800">Admin Users List</h3>
+        <div className="flex items-center gap-10">
+          <div className="w-2/4">
+            <Input
+              color="gray"
+              label="Search users..."
+              icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <Button color="gray" onClick={() => setAddOpen(true)}>
+            + Add User
+          </Button>
+        </div>
         <AddAdmin open={addOpen} handleOpenClose={setAddOpen} />
       </div>
 
@@ -137,7 +175,7 @@ export default function AdminUser() {
         ) : (
           <DataTable
             columns={columns}
-            data={users}
+            data={filteredUsers}
             pagination
             highlightOnHover
             responsive
@@ -158,11 +196,7 @@ export default function AdminUser() {
           <strong className="text-red-500">{selectedUser?.full_name}</strong>?
         </DialogBody>
         <DialogFooter className="flex justify-center gap-4">
-          <Button
-            variant="text"
-            color="blue-gray"
-            onClick={() => setDeleteDialogOpen(false)}
-          >
+          <Button variant="text" color="blue-gray" onClick={() => setDeleteDialogOpen(false)}>
             Cancel
           </Button>
           <Button color="red" onClick={deleteUser}>
@@ -182,11 +216,7 @@ export default function AdminUser() {
       )}
 
       {/* View Modal */}
-      <ViewAdmin
-        open={viewOpen}
-        handleOpenClose={setViewOpen}
-        userId={selectedUserId}
-      />
+      <ViewAdmin open={viewOpen} handleOpenClose={setViewOpen} userId={selectedUserId} />
     </div>
   );
 }

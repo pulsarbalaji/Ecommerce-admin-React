@@ -97,7 +97,7 @@ const handleSubmit = async (e) => {
       <Dialog open={open} handler={handleOpenClose} size="md">
         <Card className="p-6 rounded-2xl shadow-lg">
           <DialogHeader className="flex justify-center font-semibold text-lg">
-            Edit User ✏️
+            Edit User 
           </DialogHeader>
           <DialogBody>
             {isLoading ? (
