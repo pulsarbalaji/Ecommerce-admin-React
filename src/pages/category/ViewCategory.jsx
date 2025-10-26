@@ -81,17 +81,18 @@ export default function ViewCategory({ open, handleOpenClose, categoryId }) {
                 </p>
               </div>
               {imageUrl && (
-                <div>
-                  <p>
-                    <strong>Category Image:</strong>
-                  </p>
-                  <img
-                    src={imageUrl}
-                    alt="Category"
-                    className="w-full max-w-xs h-auto object-cover rounded-md border border-gray-300 mt-2"
-                  />
+                <div >
+                  <p className="mb-2 font-medium">Current Image:</p>
+                  <div className="w-72 h-48 border border-gray-300 rounded-md flex items-center justify-center bg-gray-50 overflow-hidden">
+                    <img
+                      src={imageUrl}
+                      alt="Category"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
                 </div>
               )}
+
             </div>
           ) : null}
 

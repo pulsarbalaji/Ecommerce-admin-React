@@ -17,52 +17,79 @@ import api from "@/utils/base_url";
 import toast from "react-hot-toast";
 
 // Styled file input with proper file name display and clearing
-function StyledFileInput({ label, value, onChange, required, error, helperText, accept = "image/jpeg,image/png,image/webp" }) {
+function StyledFileInput({
+    label,
+    value,
+    onChange,
+    required,
+    error,
+    helperText,
+    accept = "image/jpeg,image/png,image/webp",
+}) {
     const inputRef = useRef(null);
-    const [focused, setFocused] = useState(true);
     const [fileName, setFileName] = useState(value?.name || "");
+    const [preview, setPreview] = useState(null);
+    const [focused, setFocused] = useState(true);
 
-    // Update fileName when value changes from parent
-    React.useEffect(() => {
+    useEffect(() => {
         setFileName(value?.name || "");
+        if (value instanceof File) {
+            const reader = new FileReader();
+            reader.onload = (e) => setPreview(e.target.result);
+            reader.readAsDataURL(value);
+        } else {
+            setPreview(null);
+        }
     }, [value]);
 
     const handleInputChange = (e) => {
-        const file = e.target.files && e.target.files[0];
+        const file = e.target.files?.[0];
         setFileName(file ? file.name : "");
         onChange({ target: { name: "category_image", files: file ? [file] : null } });
     };
 
-    const floated = !!fileName || focused;
+    const floated = focused || fileName;
 
     return (
         <div className="relative w-full">
-            <input
-                ref={inputRef}
-                type="file"
-                accept={accept}
-                className="opacity-0 absolute inset-0 w-full h-full cursor-pointer peer"
-                onChange={handleInputChange}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(true)}
-                required={required}
-            />
+            {/* Floating Label */}
             <label
-                className={`absolute left-3 transition-all duration-200 select-none pointer-events-none text-gray-500
-          ${floated ? "text-xs -top-3.5 bg-white px-1" : "top-3"}
-          peer-focus:text-blue-gray-600 peer-focus:-top-3.5 peer-focus:text-xs`}
+                className={`absolute left-3 px-1 transition-all duration-200 bg-white text-gray-600 z-10
+        ${floated ? "-top-2.5 text-xs" : "top-2.5 text-sm"}`}
             >
                 {label}
-                {required && <span className="text-red-500 ml-1">*</span>}
+                {required && <span className="text-red-500 ml-0.5">*</span>}
             </label>
+
+            {/* Input box */}
             <div
-                className={`border rounded-md w-full px-3 py-2 flex items-center gap-2 cursor-pointer
-          ${error ? "border-red-500" : "border-gray-300"} bg-white`}
+                className={`border rounded-md px-3 py-2.5 flex items-center gap-2 bg-white cursor-pointer transition-all duration-200 ${focused
+                        ? "border-gray-800 shadow-sm"
+                        : error
+                            ? "border-red-500"
+                            : "border-gray-300"
+                    }`}
                 onClick={() => inputRef.current?.click()}
-                tabIndex={-1}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(true)}
+                tabIndex={0}
             >
-                <PhotoIcon className="h-6 w-6 text-blue-gray-400" />
-                <span className="text-blue-gray-700 text-sm truncate">{fileName || `Choose ${label.toLowerCase()}...`}</span>
+                {!fileName && <PhotoIcon className="h-5 w-5 text-blue-gray-400" />}
+
+                {preview && (
+                    <img
+                        src={preview}
+                        alt="preview"
+                        className="h-7 w-7 object-cover rounded"
+                    />
+                )}
+                <span
+                    className={`text-blue-gray-700 text-sm truncate flex-1 ${!fileName ? "text-blue-gray-400" : ""
+                        }`}
+                >
+                    {fileName || "Choose image..."}
+                </span>
+
                 {fileName && (
                     <button
                         type="button"
@@ -70,16 +97,27 @@ function StyledFileInput({ label, value, onChange, required, error, helperText, 
                         onClick={(e) => {
                             e.stopPropagation();
                             setFileName("");
+                            setPreview(null);
                             if (inputRef.current) inputRef.current.value = "";
                             onChange({ target: { name: "category_image", files: null } });
                         }}
-                        tabIndex={-1}
-                        aria-label="Remove selected image"
                     >
                         <XMarkIcon className="h-4 w-4 text-red-500" />
                     </button>
                 )}
             </div>
+
+            {/* Hidden input */}
+            <input
+                ref={inputRef}
+                type="file"
+                accept={accept}
+                className="hidden"
+                onChange={handleInputChange}
+                required={required}
+            />
+
+            {/* Helper/Error text */}
             {error && (
                 <Typography variant="small" color="red" className="mt-1">
                     {helperText}
@@ -88,6 +126,9 @@ function StyledFileInput({ label, value, onChange, required, error, helperText, 
         </div>
     );
 }
+
+
+
 
 
 export default function AddCategory({ open, handleOpenClose, refresh }) {
@@ -122,6 +163,10 @@ export default function AddCategory({ open, handleOpenClose, refresh }) {
     // Handle input changes
     const handleChange = (e) => {
         const { name, value, files } = e.target;
+        if (name === "description" && value.length > 3000) {
+            toast.error("Description cannot exceed 3000 characters.");
+            return;
+        }
         if (name === "category_image") {
             setForm((prev) => ({ ...prev, category_image: files && files.length ? files[0] : null }));
         } else {
@@ -213,7 +258,7 @@ export default function AddCategory({ open, handleOpenClose, refresh }) {
             <Card className="p-6 rounded-2xl shadow-lg">
                 <DialogHeader className="justify-center">
                     <Typography variant="h5" color="blue-gray" className="font-semibold">
-                        Add Category 📂
+                        Add Category
                     </Typography>
                 </DialogHeader>
 
@@ -253,9 +298,17 @@ export default function AddCategory({ open, handleOpenClose, refresh }) {
                                 name="description"
                                 value={form.description}
                                 onChange={handleChange}
-                                rows={6}
+                                rows={4}
+                                maxLength={3000}
                                 fullWidth
                             />
+                            <Typography
+                                variant="small"
+                                color="gray"
+                                className="text-right mt-1 text-xs"
+                            >
+                                {form.description.length}/3000
+                            </Typography>
                         </div>
                     </form>
 
