@@ -12,7 +12,12 @@ import {
   Typography,
   Input,
 } from "@material-tailwind/react";
-import { PencilIcon, TrashIcon, EyeIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import {
+  PencilIcon,
+  TrashIcon,
+  EyeIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import api from "@/utils/base_url";
 import AddCategory from "./AddCategory";
@@ -27,14 +32,16 @@ export default function Category() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
-  const backendBaseUrl = import.meta.env.VITE_API_URL;
-
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [editCategoryId, setEditCategoryId] = useState(null);
   const [viewOpen, setViewOpen] = useState(false);
+
+  const [editCategoryId, setEditCategoryId] = useState(null);
   const [viewCategoryId, setViewCategoryId] = useState(null);
 
+  const backendBaseUrl = import.meta.env.VITE_API_URL;
+
+  // Fetch categories
   const fetchCategories = async () => {
     setLoading(true);
     try {
@@ -54,20 +61,24 @@ export default function Category() {
     fetchCategories();
   }, []);
 
-  // 🔍 Handle Search Filtering
+  // 🔍 Debounced Search
   useEffect(() => {
-    if (!search.trim()) {
-      setFilteredCategories(categories);
-      return;
-    }
-    const lower = search.toLowerCase();
-    setFilteredCategories(
-      categories.filter((cat) =>
-        cat.category_name?.toLowerCase().includes(lower)
-      )
-    );
+    const timeout = setTimeout(() => {
+      if (!search.trim()) {
+        setFilteredCategories(categories);
+      } else {
+        const lower = search.toLowerCase();
+        setFilteredCategories(
+          categories.filter((cat) =>
+            cat.category_name?.toLowerCase().includes(lower)
+          )
+        );
+      }
+    }, 400);
+    return () => clearTimeout(timeout);
   }, [search, categories]);
 
+  // 🗑 Delete Category
   const deleteCategory = async () => {
     if (!selectedCategory) return;
 
@@ -75,8 +86,12 @@ export default function Category() {
     try {
       const res = await api.delete(`categories/${selectedCategory.id}/`);
       if (res.data?.status === true || res.status === 200) {
-        toast.success(res.data?.message || "Category deleted successfully!", { id: toastId });
-        setCategories((prev) => prev.filter((c) => c.id !== selectedCategory.id));
+        toast.success(res.data?.message || "Category deleted successfully!", {
+          id: toastId,
+        });
+        setCategories((prev) =>
+          prev.filter((c) => c.id !== selectedCategory.id)
+        );
         setDeleteDialogOpen(false);
         setSelectedCategory(null);
       } else {
@@ -84,22 +99,20 @@ export default function Category() {
       }
     } catch (err) {
       console.error("Error deleting category:", err);
-      toast.dismiss(toastId);
-      const errorMessage =
-        err.response?.data?.message ||
-        err.response?.data?.detail ||
-        err.message ||
-        "Failed to delete category. Please try again.";
-      toast.error(errorMessage, { id: toastId });
+      toast.error("Failed to delete category.", { id: toastId });
     }
   };
 
+  // 📊 Table Columns
   const columns = [
-    { name: "Category Name", selector: (row) => row.category_name, sortable: true },
+    {
+      name: "Category Name",
+      selector: (row) => row.category_name,
+      sortable: true,
+      wrap: true,
+    },
     {
       name: "Category Image",
-      selector: (row) => row.category_image,
-      sortable: true,
       cell: (row) => (
         <img
           src={
@@ -113,11 +126,14 @@ export default function Category() {
           className="h-10 w-10 rounded object-cover"
         />
       ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
     },
     {
       name: "Actions",
       cell: (row) => (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 justify-center">
           <IconButton
             size="sm"
             variant="text"
@@ -157,12 +173,15 @@ export default function Category() {
   ];
 
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="min-h-screen bg-white p-4 sm:p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-2xl font-bold text-blue-gray-800">Category List</h3>
-        <div className="flex items-center gap-10">
-          <div className="w-2/4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h3 className="text-xl sm:text-2xl font-bold text-blue-gray-800">
+          Category List
+        </h3>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          <div className="flex-1 sm:w-64">
             <Input
               color="gray"
               label="Search category..."
@@ -171,30 +190,34 @@ export default function Category() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Button color="gray" onClick={() => setAddOpen(true)}>
+          <Button
+            color="gray"
+            className="w-full sm:w-auto"
+            onClick={() => setAddOpen(true)}
+          >
             + Add Category
           </Button>
         </div>
-        <AddCategory open={addOpen} handleOpenClose={setAddOpen} refresh={fetchCategories} />
       </div>
 
       {/* DataTable */}
       <Card className="shadow-lg">
         {loading ? (
-          <div className="flex justify-center py-10">
+          <div className="flex justify-center py-10 items-center gap-2">
             <Spinner className="h-8 w-8" color="blue" />
-            <span className="ml-2 text-blue-gray-400">Loading categories...</span>
+            <span className="text-blue-gray-400">Loading categories...</span>
           </div>
         ) : (
-          <DataTable
-            columns={columns}
-            data={filteredCategories}
-            pagination
-            highlightOnHover
-            responsive
-            noHeader
-            noDataComponent="No categories found."
-          />
+          <div className="overflow-x-auto">
+            <DataTable
+              columns={columns}
+              data={filteredCategories}
+              pagination
+              highlightOnHover
+              responsive
+              noDataComponent="No categories found."
+            />
+          </div>
         )}
       </Card>
 
@@ -207,10 +230,17 @@ export default function Category() {
         </DialogHeader>
         <DialogBody className="text-black text-base">
           Are you sure you want to delete{" "}
-          <strong className="text-red-500">{selectedCategory?.category_name}</strong>?
+          <strong className="text-red-500">
+            {selectedCategory?.category_name}
+          </strong>
+          ?
         </DialogBody>
         <DialogFooter className="flex justify-center gap-4">
-          <Button variant="text" color="blue-gray" onClick={() => setDeleteDialogOpen(false)}>
+          <Button
+            variant="text"
+            color="blue-gray"
+            onClick={() => setDeleteDialogOpen(false)}
+          >
             Cancel
           </Button>
           <Button color="red" onClick={deleteCategory}>
@@ -219,7 +249,14 @@ export default function Category() {
         </DialogFooter>
       </Dialog>
 
-      {/* Edit Modal */}
+      {/* Modals */}
+      {addOpen && (
+        <AddCategory
+          open={addOpen}
+          handleOpenClose={setAddOpen}
+          refresh={fetchCategories}
+        />
+      )}
       {editOpen && (
         <EditCategory
           open={editOpen}
@@ -229,10 +266,12 @@ export default function Category() {
           refresh={fetchCategories}
         />
       )}
-
-      {/* View Modal */}
       {viewOpen && (
-        <ViewCategory open={viewOpen} handleOpenClose={setViewOpen} categoryId={viewCategoryId} />
+        <ViewCategory
+          open={viewOpen}
+          handleOpenClose={setViewOpen}
+          categoryId={viewCategoryId}
+        />
       )}
     </div>
   );

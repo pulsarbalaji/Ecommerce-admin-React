@@ -18,56 +18,81 @@ import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import api from "@/utils/base_url";
 import toast from "react-hot-toast";
 
+/* 🔹 Styled File Input with Preview (same as Category) */
 function StyledFileInput({
   label,
   name,
   value,
   onChange,
   required,
-  accept = "image/*",
   error,
   helperText,
+  accept = "image/jpeg,image/png,image/webp",
+  existingFileName = "",
 }) {
   const inputRef = useRef(null);
+  const [fileName, setFileName] = useState(value?.name || existingFileName || "");
+  const [preview, setPreview] = useState(null);
   const [focused, setFocused] = useState(true);
-  const [fileName, setFileName] = useState(value?.name || "");
+
+  useEffect(() => {
+    if (value instanceof File) {
+      const reader = new FileReader();
+      reader.onload = (e) => setPreview(e.target.result);
+      reader.readAsDataURL(value);
+    } else {
+      setPreview(null);
+    }
+    setFileName(value?.name || existingFileName || "");
+  }, [value, existingFileName]);
 
   const handleInputChange = (e) => {
     const file = e.target.files?.[0];
     setFileName(file ? file.name : "");
     onChange({ target: { name, files: file ? [file] : null } });
   };
-  const floated = !!fileName || focused;
+
+  const floated = focused || fileName;
 
   return (
     <div className="relative w-full">
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        className="absolute inset-0 opacity-0 cursor-pointer"
-        onChange={handleInputChange}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(true)}
-        required={required}
-      />
-         <label
-        className={`absolute left-3 transition-all duration-200 select-none pointer-events-none text-gray-500
-          ${floated ? "text-xs -top-3.5 bg-white px-1" : "top-3"}
-          peer-focus:text-blue-gray-600 peer-focus:-top-3.5 peer-focus:text-xs`}
+      <label
+        className={`absolute left-3 px-1 transition-all duration-200 bg-white text-gray-600 z-10
+        ${floated ? "-top-2.5 text-xs" : "top-2.5 text-sm"}`}
       >
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
+
       <div
-        className={`border rounded-md w-full px-3 py-2 flex items-center gap-2 bg-white ${error ? "border-red-500" : "border-gray-300"
+        className={`border rounded-md px-3 py-2.5 flex items-center gap-2 bg-white cursor-pointer transition-all duration-200 ${focused
+            ? "border-gray-800 shadow-sm"
+            : error
+              ? "border-red-500"
+              : "border-gray-300"
           }`}
         onClick={() => inputRef.current?.click()}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(true)}
+        tabIndex={0}
       >
-        <PhotoIcon className="h-6 w-6 text-blue-gray-400" />
-        <span className="text-blue-gray-700 text-sm truncate">
-          {fileName || `Choose ${label.toLowerCase()}...`}
+        {!fileName && <PhotoIcon className="h-5 w-5 text-blue-gray-400" />}
+
+        {preview && (
+          <img
+            src={preview}
+            alt="preview"
+            className="h-7 w-7 object-cover rounded"
+          />
+        )}
+
+        <span
+          className={`text-blue-gray-700 text-sm truncate flex-1 ${!fileName ? "text-blue-gray-400" : ""
+            }`}
+        >
+          {fileName || "Choose image..."}
         </span>
+
         {fileName && (
           <button
             type="button"
@@ -75,6 +100,7 @@ function StyledFileInput({
             onClick={(e) => {
               e.stopPropagation();
               setFileName("");
+              setPreview(null);
               if (inputRef.current) inputRef.current.value = "";
               onChange({ target: { name, files: null } });
             }}
@@ -83,6 +109,16 @@ function StyledFileInput({
           </button>
         )}
       </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={handleInputChange}
+        required={required}
+      />
+
       {error && (
         <Typography variant="small" color="red" className="mt-1">
           {helperText}
@@ -92,12 +128,8 @@ function StyledFileInput({
   );
 }
 
-export default function EditProduct({
-  open,
-  handleOpenClose,
-  productId,
-  refresh,
-}) {
+/* 🔹 Edit Product Component */
+export default function EditProduct({ open, handleOpenClose, productId, refresh }) {
   const [form, setForm] = useState({
     product_name: "",
     product_description: "",
@@ -107,8 +139,8 @@ export default function EditProduct({
     product_image: null,
     is_available: false,
   });
-
   const [existingImage, setExistingImage] = useState(null);
+  const [existingFileName, setExistingFileName] = useState("");
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,6 +148,7 @@ export default function EditProduct({
 
   useEffect(() => {
     if (!open || !productId) return;
+
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -128,13 +161,14 @@ export default function EditProduct({
         setForm({
           product_name: productData.product_name,
           product_description: productData.product_description,
-          category: productData.category,
+          category: String(productData.category),
           price: productData.price,
           stock_quantity: productData.stock_quantity,
           product_image: null,
           is_available: productData.is_available || false,
         });
         setExistingImage(productData.product_image);
+        setExistingFileName(productData.product_image?.split("/").pop() || "");
         setCategories(categoryRes.data.data);
       } catch (err) {
         toast.error("Error loading product details");
@@ -142,13 +176,14 @@ export default function EditProduct({
         setIsLoading(false);
       }
     };
+
     fetchData();
   }, [productId, open]);
 
   const handleChange = (e) => {
     const { name, value, files, type, checked } = e.target;
     if (name === "product_image") {
-      setForm((prev) => ({ ...prev, product_image: files?.length ? files[0] : null }));
+      setForm((prev) => ({ ...prev, product_image: files?.[0] || null }));
     } else if (type === "checkbox") {
       setForm((prev) => ({ ...prev, [name]: checked }));
     } else {
@@ -162,19 +197,19 @@ export default function EditProduct({
     try {
       const payload = new FormData();
       payload.append("product_name", form.product_name);
-      payload.append("product_description", form.product_description || "");
+      payload.append("product_description", form.product_description);
       payload.append("category", form.category);
       payload.append("price", form.price);
       payload.append("stock_quantity", form.stock_quantity);
       payload.append("is_available", form.is_available);
+      if (form.product_image)
+        payload.append("product_image", form.product_image);
 
-      if (form.product_image) payload.append("product_image", form.product_image);
-
-      await api.put(`product/${productId}/`, payload, {
+      const res = await api.put(`product/${productId}/`, payload, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      toast.success("Product updated successfully!");
+      toast.success(res.data?.message || "Product updated successfully!");
       refresh?.();
       handleOpenClose(false);
     } catch (err) {
@@ -193,25 +228,32 @@ export default function EditProduct({
     }, 500);
   };
 
-  const backendBaseUrl = import.meta.env.VITE_API_URL;
-  const imageUrl = existingImage && (existingImage.startsWith("http") ? existingImage : `${backendBaseUrl}${existingImage}`);
+  const imageUrl =
+    existingImage &&
+    `${api.defaults.baseURL.replace(/\/api\/?$/, "")}/${existingImage.replace(
+      /^\//,
+      ""
+    )}`;
 
   return (
     <Dialog open={open} handler={handleOpenClose} size="lg">
       <Card className="p-6 rounded-2xl shadow-lg">
         <DialogHeader className="justify-center">
           <Typography variant="h5" color="blue-gray" className="font-semibold">
-            Edit Product ✏️
+            Edit Product 
           </Typography>
         </DialogHeader>
 
-        <DialogBody className="max-h-[60vh] overflow-y-auto">
+        <DialogBody className="max-h-[65vh] overflow-y-auto">
           {isLoading ? (
             <div className="flex justify-center py-10">
               <Spinner size="lg" color="blue" />
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form
+              onSubmit={handleSubmit}
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            >
               <Input
                 label="Product Name"
                 name="product_name"
@@ -221,13 +263,19 @@ export default function EditProduct({
               />
 
               <Select
-                label="Select Category"
-                value={form.category}
-                onChange={(val) => setForm((prev) => ({ ...prev, category: val }))}
+                label={
+                  <span>
+                    Select Category <span className="text-red-500">*</span>
+                  </span>
+                }
+                value={String(form.category)}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, category: val }))
+                }
                 required
               >
                 {categories.map((cat) => (
-                  <Option key={cat.id} value={cat.id}>
+                  <Option key={cat.id} value={String(cat.id)}>
                     {cat.category_name}
                   </Option>
                 ))}
@@ -237,8 +285,8 @@ export default function EditProduct({
                 label="Price"
                 name="price"
                 type="number"
-                value={form.price}
                 min="0"
+                value={form.price}
                 onChange={handleChange}
                 required
               />
@@ -252,46 +300,66 @@ export default function EditProduct({
                 onChange={handleChange}
                 required
               />
-<div className="md:col-span-1">
+
               <StyledFileInput
                 label="Product Image"
                 name="product_image"
                 value={form.product_image}
                 onChange={handleChange}
-                required={true}
+                required
+                existingFileName={existingFileName}
+                error={
+                  form.product_image &&
+                  !["image/jpeg", "image/png", "image/webp"].includes(
+                    form.product_image.type
+                  )
+                }
+                helperText="Only JPEG, PNG, or WEBP images allowed"
               />
+
+              <div className="flex items-center justify-start  gap-3">
+                <Switch
+                  id="is_available"
+                  name="is_available"
+                  checked={form.is_available}
+                  onChange={handleChange}
+                />
+                <label
+                  htmlFor="is_available"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Available
+                </label>
               </div>
-              <Switch
-                id="is_available"
-                name="is_available"
-                checked={form.is_available}
-                onChange={handleChange}
-              />
-              <label htmlFor="is_available" className="text-sm font-medium text-gray-700">
-                Available
-              </label>
-              <div className="md:col-span-2 flex items-center gap-2">
+
+              <div className="md:col-span-2">
                 <Textarea
                   label="Description"
                   name="product_description"
                   value={form.product_description}
                   onChange={handleChange}
-                  rows={6}
-                  className="md:col-span-2"
+                  rows={4}
+                  maxLength={3000}
                 />
-
+                <Typography
+                  variant="small"
+                  color="gray"
+                  className="text-right mt-1 text-xs"
+                >
+                  {form.product_description.length}/3000
+                </Typography>
               </div>
-
-
 
               {imageUrl && !form.product_image && (
                 <div className="md:col-span-2">
                   <p className="mb-2 font-medium">Current Image:</p>
-                  <img
-                    src={imageUrl}
-                    alt="Product"
-                    className="w-72 h-48 object-cover rounded-md border border-gray-300"
-                  />
+                  <div className="w-72 h-48 border border-gray-300 rounded-md flex items-center justify-center bg-gray-50 overflow-hidden">
+                    <img
+                      src={imageUrl}
+                      alt="Product"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
                 </div>
               )}
             </form>
@@ -301,7 +369,7 @@ export default function EditProduct({
         <DialogFooter className="flex justify-center gap-4">
           <Button
             variant="outlined"
-            color="secondary"
+            color="blue-gray"
             onClick={handleCancel}
             disabled={isCancelling || isSubmitting}
           >
@@ -312,8 +380,13 @@ export default function EditProduct({
             onClick={handleSubmit}
             color="gray"
             disabled={isSubmitting || isLoading}
+            className="flex items-center justify-center gap-2"
           >
-            {isSubmitting ? <Spinner size="sm" color="white" /> : "Update Product"}
+            {isSubmitting ? (
+              <Spinner size="sm" color="white" />
+            ) : (
+              "Update Product"
+            )}
           </Button>
         </DialogFooter>
       </Card>

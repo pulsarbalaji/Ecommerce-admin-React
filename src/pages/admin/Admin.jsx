@@ -97,10 +97,10 @@ export default function AdminUser() {
   };
 
   const columns = [
-    { name: "Full Name", selector: (row) => row.full_name, sortable: true },
-    { name: "Email", selector: (row) => row.email, sortable: true },
-    { name: "Phone", selector: (row) => row.phone, sortable: true },
-    { name: "Role", selector: (row) => row.role, sortable: true },
+    { name: "Full Name", selector: (row) => row.full_name, sortable: true, wrap: true },
+    { name: "Email", selector: (row) => row.email, sortable: true, wrap: true },
+    { name: "Phone", selector: (row) => row.phone, sortable: true, wrap: true },
+    { name: "Role", selector: (row) => row.role, sortable: true, wrap: true },
     {
       name: "Actions",
       cell: (row) => (
@@ -144,28 +144,31 @@ export default function AdminUser() {
   ];
 
   return (
-    <div className="min-h-screen bg-white p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-2xl font-bold text-blue-gray-800">Admin Users List</h3>
-        <div className="flex items-center gap-10">
-          <div className="w-2/4">
+    <div className="min-h-screen bg-white p-2 sm:p-4 md:p-6">
+      {/* Header - Responsive Flex */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 gap-3">
+        <h3 className="text-xl sm:text-2xl font-bold text-blue-gray-800 mb-2 md:mb-0">
+          Admin Users List
+        </h3>
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto items-stretch md:items-center">
+          <div className="w-full sm:w-64">
             <Input
               color="gray"
               label="Search users..."
               icon={<MagnifyingGlassIcon className="h-5 w-5" />}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              crossOrigin=""
             />
           </div>
-          <Button color="gray" onClick={() => setAddOpen(true)}>
+          <Button color="gray" className="w-full sm:w-auto" onClick={() => setAddOpen(true)}>
             + Add User
           </Button>
         </div>
         <AddAdmin open={addOpen} handleOpenClose={setAddOpen} />
       </div>
 
-      {/* DataTable */}
+      {/* DataTable - Responsive overflow on small screens */}
       <Card className="shadow-lg">
         {loading ? (
           <div className="flex justify-center py-10 items-center gap-2">
@@ -173,14 +176,16 @@ export default function AdminUser() {
             <span className="text-blue-gray-400">Loading users...</span>
           </div>
         ) : (
-          <DataTable
-            columns={columns}
-            data={filteredUsers}
-            pagination
-            highlightOnHover
-            responsive
-            noDataComponent="No users found."
-          />
+          <div className="overflow-x-auto">
+            <DataTable
+              columns={columns}
+              data={filteredUsers}
+              pagination
+              highlightOnHover
+              responsive
+              noDataComponent="No users found."
+            />
+          </div>
         )}
       </Card>
 
