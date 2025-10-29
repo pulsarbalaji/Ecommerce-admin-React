@@ -128,9 +128,9 @@ function StyledFileInput({
 
 export default function AddProduct({ open, handleOpenClose, refresh }) {
 
-    const { authData } = useAuth();
-    const admin = authData?.admin;
-    
+  const { authData } = useAuth();
+  const admin = authData?.admin;
+
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -151,7 +151,7 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        
+
         const res = await api.get("categories/");
 
         setCategories(res.data?.data || []);
@@ -193,6 +193,7 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
 
   // Handle input changes
   const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     const { name, value, files } = e.target;
     setForm((prev) => ({
       ...prev,
@@ -215,7 +216,7 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
       payload.append("price", form.price);
       payload.append("stock_quantity", form.stock_quantity);
       payload.append("is_available", true);
-      payload.append("created_by",admin.user_id);
+      payload.append("created_by", admin.user_id);
       if (form.product_image) payload.append("product_image", form.product_image);
 
       await api.post("product/", payload, {
@@ -322,22 +323,43 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
               name="price"
               type="number"
               min="0"
+              max="10000"
               value={form.price}
-              onChange={handleChange}
+              onChange={(e) => {
+                const value = e.target.value;
+                // prevent numbers > 40
+                if (value === "" || (Number(value) >= 0 && Number(value) <= 10000)) {
+                  handleChange(e);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+              }}
               error={!!errors.price}
               required
             />
+
             {/* Stock Quantity */}
             <Input
               label="Stock Quantity"
               name="stock_quantity"
               type="number"
               min="0"
+              max="100"
               value={form.stock_quantity}
-              onChange={handleChange}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "" || (Number(value) >= 0 && Number(value) <= 100)) {
+                  handleChange(e);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+              }}
               error={!!errors.stock_quantity}
               required
             />
+
             {/* Description */}
             <div className="md:col-span-2">
               <Textarea

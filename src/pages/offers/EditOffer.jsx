@@ -8,7 +8,6 @@ import {
   Input,
   Select,
   Option,
-  Switch,
   Button,
   Typography,
   Spinner,
@@ -24,7 +23,8 @@ export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
     product: "",
     start_date: "",
     end_date: "",
-    is_active: true,
+    category_name: "",
+    product_name: "",
   });
 
   const [categories, setCategories] = useState([]);
@@ -34,18 +34,14 @@ export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
   const [isCancelling, setIsCancelling] = useState(false);
 
   const formatDate = (date) => new Date(date).toISOString().split("T")[0];
-  const today = new Date();
-  const minStartDate = formatDate(
-    new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7)
-  );
+  const today = formatDate(new Date());
 
   const isDateInFuture = (date) => {
     if (!date) return false;
-    const now = formatDate(new Date());
-    return new Date(date) > new Date(now);
+    return new Date(date) > new Date(today);
   };
 
-  // 🧩 Fetch categories + offer details (no dynamic product/category reload)
+  // --- Fetch categories and offer details
   useEffect(() => {
     if (!open || !offerId) return;
 
@@ -60,19 +56,18 @@ export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
         setCategories(categoriesRes.data?.data || []);
         const offerData = offerRes.data?.data;
 
-       setForm({
-  offer_name: offerData.offer_name || "",
-  offer_percentage: offerData.offer_percentage || "",
-  category: String(offerData.category), // Keep ID for backend
-  product: String(offerData.product),   // Keep ID for backend
-  start_date: offerData.start_date || "",
-  end_date: offerData.end_date || "",
-  is_active: offerData.is_active,
-  category_name: offerData.category_name || "", // Add for display
-  product_name: offerData.product_name || "",   // Add for display
-});
+        setForm({
+          offer_name: offerData.offer_name || "",
+          offer_percentage: offerData.offer_percentage || "",
+          category: String(offerData.category) || "",
+          product: String(offerData.product) || "",
+          start_date: offerData.start_date || "",
+          end_date: offerData.end_date || "",
+          category_name: offerData.category_name || "",
+          product_name: offerData.product_name || "",
+        });
 
-        // Directly load the product name for display (not selectable)
+        // For display
         const productName = offerData.product_name || "Unknown Product";
         setProducts([{ id: offerData.product, product_name: productName }]);
       } catch (err) {
@@ -86,34 +81,20 @@ export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
     fetchData();
   }, [open, offerId]);
 
-  // 🧩 Handle input changes
+  // --- Handle input changes
   const handleChange = (field, value) => {
-    if (field === "start_date") {
-      setForm((prev) => ({
-        ...prev,
-        [field]: value,
-        is_active: isDateInFuture(value) ? false : prev.is_active,
-        end_date:
-          prev.end_date && new Date(value) > new Date(prev.end_date)
-            ? ""
-            : prev.end_date,
-      }));
-      return;
-    }
-
-    if (field === "is_active") {
-      if (isDateInFuture(form.start_date)) {
-        toast.error("Active offer cannot have a future start date.");
-        return;
-      }
-      setForm((prev) => ({ ...prev, [field]: value }));
-      return;
-    }
-
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field === "start_date" &&
+        prev.end_date &&
+        new Date(value) > new Date(prev.end_date)
+        ? { end_date: "" }
+        : {}),
+    }));
   };
 
-  // 🧩 Validation
+  // --- Validation
   const validateForm = () => {
     if (!form.offer_name) return toast.error("Offer name is required");
     if (!form.offer_percentage) return toast.error("Offer percentage is required");
@@ -123,24 +104,34 @@ export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
     if (!form.end_date) return toast.error("End date is required");
     if (new Date(form.start_date) > new Date(form.end_date))
       return toast.error("Start date cannot be after end date");
-    if (isDateInFuture(form.start_date) && form.is_active)
-      return toast.error("Active offer cannot have a future start date.");
     return true;
   };
 
-  // 🧩 Submit handler
+  // --- Submit handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setIsSubmitting(true);
     try {
+      const startDate = formatDate(form.start_date);
+      const isActive = startDate === today; // ✅ Auto active if start_date = today
+
       await api.put(`offers/${offerId}/`, {
         ...form,
         category: Number(form.category),
         product: Number(form.product),
+        is_active: isActive,
       });
-      toast.success("Offer updated successfully!");
+
+      toast.success(
+        `Offer updated successfully! ${
+          isActive
+            ? "It’s now active 🎉"
+            : "It will activate automatically on the start date ⏰"
+        }`
+      );
+
       refresh?.();
       handleOpenClose(false);
     } catch (err) {
@@ -151,6 +142,7 @@ export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
     }
   };
 
+  // --- Cancel
   const handleCancel = () => {
     setIsCancelling(true);
     setTimeout(() => {
@@ -178,7 +170,6 @@ export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
               className="grid grid-cols-1 md:grid-cols-2 gap-6"
               onSubmit={handleSubmit}
             >
-              {/* Offer Name */}
               <Input
                 label="Offer Name"
                 value={form.offer_name}
@@ -186,43 +177,45 @@ export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
                 required
               />
 
-              {/* Offer Percentage */}
               <Input
                 label="Offer Percentage (%)"
                 type="number"
                 min="1"
                 max="99"
                 value={form.offer_percentage}
-                onChange={(e) => handleChange("offer_percentage", e.target.value)}
+                 onChange={(e) => {
+                const val = e.target.value;
+                if (/^\d{0,2}$/.test(val)) {
+                  handleChange("offer_percentage", val);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-", "."].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
                 required
               />
 
-              {/* Start Date */}
               <Input
                 label="Start Date"
                 type="date"
                 value={form.start_date}
                 onChange={(e) => handleChange("start_date", e.target.value)}
                 required
-                min={minStartDate}
+                min={today}
               />
 
-              {/* End Date */}
               <Input
                 label="End Date"
                 type="date"
                 value={form.end_date}
                 onChange={(e) => handleChange("end_date", e.target.value)}
                 required
-                min={form.start_date || minStartDate}
+                min={form.start_date || today}
               />
 
-              {/* Category (disabled) */}
-              <Select
-                label="Category"
-                value={form.category_name}
-                disabled
-              >
+              <Select label="Category" value={form.category_name} disabled>
                 {categories.map((cat) => (
                   <Option key={cat.id} value={String(cat.id)}>
                     {cat.category_name}
@@ -230,12 +223,7 @@ export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
                 ))}
               </Select>
 
-              {/* Product (disabled) */}
-              <Select
-                label="Product"
-                value={form.product_name}
-                disabled
-              >
+              <Select label="Product" value={form.product_name} disabled>
                 {products.map((prod) => (
                   <Option key={prod.id} value={String(prod.id)}>
                     {prod.product_name}
@@ -243,36 +231,18 @@ export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
                 ))}
               </Select>
 
-              {/* Active Switch */}
-              <div className="md:col-span-2 flex flex-col sm:flex-row sm:items-center sm:gap-2">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="is_active"
-                    checked={form.is_active}
-                    onChange={(e) => handleChange("is_active", e.target.checked)}
-                    disabled={
-                      isDateInFuture(form.start_date) || new Date(form.end_date) < new Date()
-                    }
-                  />
-                  <label
-                    htmlFor="is_active"
-                    className="text-sm font-medium text-gray-700"
-                  >
-                    Active
-                  </label>
-                </div>
-
+              <div className="md:col-span-2 flex flex-col sm:flex-row justify-center sm:gap-2">
                 {form.start_date && form.end_date && (
                   <>
                     {isDateInFuture(form.start_date) ? (
                       <Typography
                         variant="small"
-                        color="orange"
+                        color="green"
                         className="mt-2 sm:mt-0 sm:ml-4 text-xs"
                       >
                         ⚠️ This offer starts on{" "}
-                        <span className="font-semibold">{form.start_date}</span> and will
-                        automatically activate on that date.
+                        <span className="font-semibold">{form.start_date}</span> and
+                        will automatically activate on that date.
                       </Typography>
                     ) : new Date(form.end_date) < new Date() ? (
                       <Typography
@@ -281,8 +251,7 @@ export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
                         className="mt-2 sm:mt-0 sm:ml-4 text-xs"
                       >
                         ⚠️ This offer has expired on{" "}
-                        <span className="font-semibold">{form.end_date}</span>. You cannot
-                        activate it.
+                        <span className="font-semibold">{form.end_date}</span>.
                       </Typography>
                     ) : null}
                   </>
