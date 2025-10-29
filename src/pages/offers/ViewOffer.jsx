@@ -44,7 +44,7 @@ export default function ViewOffer({ open, handleOpenClose, offerId }) {
       <Card className="p-6 rounded-2xl shadow-lg">
         <DialogHeader className="justify-center">
           <Typography variant="h5" color="blue-gray" className="font-semibold">
-            View Offer 👁️
+            View Offer 
           </Typography>
         </DialogHeader>
 

@@ -279,7 +279,6 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
               required
             />
             {/* Category */}
-            {/* Category */}
             <div>
               <Select
                 label={

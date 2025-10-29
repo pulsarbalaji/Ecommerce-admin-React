@@ -38,7 +38,6 @@ export default function ViewProduct({ open, handleOpenClose, productId }) {
           }
         }
 
-        // Fix image path
         if (data.product_image) {
           setImageUrl(
             `${api.defaults.baseURL.replace(/\/api\/?$/, "")}/${data.product_image.replace(
@@ -66,7 +65,7 @@ export default function ViewProduct({ open, handleOpenClose, productId }) {
       <Card className="p-6 rounded-2xl shadow-lg max-h-[80vh] overflow-hidden">
         <DialogHeader className="justify-center sticky top-0 bg-white z-10 pb-2 border-b">
           <Typography variant="h5" color="blue-gray" className="font-semibold">
-            View Product 👁️
+            View Product 
           </Typography>
         </DialogHeader>
 
