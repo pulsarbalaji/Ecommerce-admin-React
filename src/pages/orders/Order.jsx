@@ -119,6 +119,7 @@ export default function Orders() {
       {
         name: "Status",
         selector: (row) => row.status,
+        sortable: true,
         cell: (row) => (
           <Chip
             color={orderStatusColor[row.status] || "gray"}
@@ -131,6 +132,7 @@ export default function Orders() {
       {
         name: "Payment Status",
         selector: (row) => row.payment_status,
+        sortable: true,
         cell: (row) => (
           <Chip
             color={paymentStatusColor[row.payment_status] || "gray"}
@@ -145,6 +147,7 @@ export default function Orders() {
       {
         name: "Total Amount (₹)",
         selector: (row) => row.total_amount,
+        sortable: true,
         cell: (row) => <span className="font-medium">₹{row.total_amount}</span>,
       },
       {

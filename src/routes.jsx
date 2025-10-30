@@ -8,6 +8,8 @@ import {
   ShoppingCartIcon,
   PhoneIcon,
   UsersIcon,
+  ReceiptPercentIcon,
+  TruckIcon,
 } from "@heroicons/react/24/solid";
 import Home from "./pages/dashboard/Home";
 
@@ -21,6 +23,8 @@ import ContactUs from "./pages/contactus/ContactUs";
 import Customers from "./pages/customer/Customer";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import GSTSetting from "./pages/gst/GSTSetting";
+import CourierSetting from "./pages/courierCharge/CourierChargeSetting";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -77,6 +81,18 @@ export const routes = [
         name: "Contact Us Details",
         path: "/contact_us",
         element: <ContactUs />,
+      },
+      {
+        icon: <ReceiptPercentIcon {...icon} />,
+        name: "GST Setting",
+        path: "/gst_setting",
+        element: <GSTSetting />,
+      },
+      {
+        icon: <TruckIcon {...icon} />,
+        name: "Courier Charge Setting",
+        path: "/courier_setting",
+        element: <CourierSetting />,
       },
     ],
   },
