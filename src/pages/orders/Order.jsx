@@ -1,18 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import DataTable from "react-data-table-component";
 import {
   IconButton,
   Card,
   Spinner,
   Chip,
+  Input,
 } from "@material-tailwind/react";
 import { EyeIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import api from "@/utils/base_url";
-import ViewOrder from "./ViewOrder"; // your modal
-import OrderUpdate from "./OrderUpdate"; // your modal
+import ViewOrder from "./ViewOrder";
+import OrderUpdate from "./OrderUpdate";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [totalOrders, setTotalOrders] = useState(0);
 
@@ -25,7 +29,8 @@ export default function Orders() {
   const [updateOpen, setUpdateOpen] = useState(false);
   const [updateOrderId, setUpdateOrderId] = useState(null);
 
-  // Map status to colors
+  const isFetching = useRef(false);
+
   const orderStatusColor = {
     pending: "yellow",
     processing: "blue",
@@ -42,34 +47,52 @@ export default function Orders() {
     refunded: "blue",
   };
 
-  // Fetch orders with pagination
-  const fetchOrders = async (pageNumber = page, pageSize = itemsPerPage) => {
-    setLoading(true);
-    try {
-      const res = await api.get("orderdetails/", {
-        params: {
-          page: pageNumber,
-          page_size: pageSize,
-        },
-      });
-      setOrders(res.data.results || [])      
-      setTotalOrders(res.data.count || 0);
-    } catch (err) {
-      console.error("Error fetching orders:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchOrders = useCallback(
+    async (pageNumber = 1, pageSize = 10) => {
+      if (isFetching.current) return;
+      isFetching.current = true;
+
+      
+      setLoading(true);
+
+      try {
+        const res = await api.get("orderdetails/", {
+          params: { page: pageNumber, page_size: pageSize },
+        });
+        const results = res.data.results || [];
+        setOrders(results);
+        setFilteredOrders(results);
+        setTotalOrders(res.data.count || 0);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+      } finally {
+        setLoading(false);
+        setTimeout(() => (isFetching.current = false), 200);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
-    fetchOrders();
-  }, [page, itemsPerPage]);
+    fetchOrders(page, itemsPerPage);
+  }, [fetchOrders, page, itemsPerPage]);
 
-  // Actions
+  useEffect(() => {
+    if (!search.trim()) {
+      setFilteredOrders(orders);
+    } else {
+      const lower = search.toLowerCase();
+      setFilteredOrders(
+        orders.filter((o) =>
+          [o.order_number, o.status, o.payment_status, String(o.total_amount)]
+            .some((f) => f?.toLowerCase().includes(lower))
+        )
+      );
+    }
+  }, [search, orders]);
+
   const viewOrder = (order) => {
     setViewOrderId(order.id);
-    console.log("id is",order.id);
-    
     setViewOpen(true);
   };
 
@@ -78,96 +101,121 @@ export default function Orders() {
     setUpdateOpen(true);
   };
 
-  const columns = [
-    {
-      name: "Order Number",
-      selector: (row) => row.order_number,
-      sortable: true,
-    },
-    {
-      name: "Status",
-      cell: (row) => (
-        <Chip
-          color={orderStatusColor[row.status] || "gray"}
-          value={row.status.charAt(0).toUpperCase() + row.status.slice(1)}
-          size="sm"
-        />
-      ),
-    },
-    {
-      name: "Payment Status",
-      cell: (row) => (
-        <Chip
-          color={paymentStatusColor[row.payment_status] || "gray"}
-          value={row.payment_status.charAt(0).toUpperCase() + row.payment_status.slice(1)}
-          size="sm"
-        />
-      ),
-    },
-    {
-      name: "Total Amount (₹)",
-      selector: (row) => row.total_amount,
-      sortable: true,
-      cell: (row) => <span className="font-medium">₹{row.total_amount}</span>,
-    },
-    {
-      name: "Actions",
-      cell: (row) => (
-        <div className="flex gap-2">
-          <IconButton
+  const columns = useMemo(
+    () => [
+      {
+        name: "Order Number",
+        selector: (row) => row.order_number,
+        sortable: true,
+      },
+      {
+        name: "Status",
+        selector: (row) => row.status,
+        cell: (row) => (
+          <Chip
+            color={orderStatusColor[row.status] || "gray"}
+            value={row.status.charAt(0).toUpperCase() + row.status.slice(1)}
             size="sm"
-            variant="text"
-            color="gray"
-            onClick={() => viewOrder(row)}
-          >
-            <EyeIcon className="h-5 w-5" />
-          </IconButton>
-          <IconButton
+          />
+        ),
+      },
+      {
+        name: "Payment Status",
+        selector: (row) => row.payment_status,
+        cell: (row) => (
+          <Chip
+            color={paymentStatusColor[row.payment_status] || "gray"}
+            value={
+              row.payment_status.charAt(0).toUpperCase() +
+              row.payment_status.slice(1)
+            }
             size="sm"
-            variant="text"
-            color="blue"
-            onClick={() => updateStatus(row)}
-          >
-            <ArrowPathIcon className="h-5 w-5" />
-          </IconButton>
-        </div>
-      ),
-    },
-  ];
+          />
+        ),
+      },
+      {
+        name: "Total Amount (₹)",
+        selector: (row) => row.total_amount,
+        cell: (row) => <span className="font-medium">₹{row.total_amount}</span>,
+      },
+      {
+        name: "Actions",
+        cell: (row) => (
+          <div className="flex gap-2">
+            <IconButton
+              size="sm"
+              variant="text"
+              color="gray"
+              onClick={() => viewOrder(row)}
+            >
+              <EyeIcon className="h-5 w-5" />
+            </IconButton>
+            <IconButton
+              size="sm"
+              variant="text"
+              color="blue"
+              onClick={() => updateStatus(row)}
+            >
+              <ArrowPathIcon className="h-5 w-5" />
+            </IconButton>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
 
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-2xl font-bold text-blue-gray-800">Orders List</h3>
+        <h3 className="text-2xl font-bold text-blue-gray-800">Orders</h3>
+        <div className="w-full sm:w-64 sm:ml-auto">
+          <Input
+            color="gray"
+            label="Search orders..."
+            icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
       </div>
 
       <Card className="shadow-lg">
         {loading ? (
           <div className="flex justify-center py-10">
             <Spinner className="h-8 w-8" color="blue" />
-            <span className="ml-2 text-blue-gray-400">Loading orders...</span>
+            <span className="ml-2 text-blue-gray-400">Loading...</span>
           </div>
         ) : (
           <DataTable
+            key={`${page}-${itemsPerPage}`} // stabilize table render
             columns={columns}
-            data={orders}
+            data={filteredOrders}
             pagination
             paginationServer
             paginationTotalRows={totalOrders}
+            paginationPerPage={itemsPerPage}
             paginationDefaultPage={page}
-            onChangePage={(p) => setPage(p)}
-            onChangeRowsPerPage={(size) => {
-              setItemsPerPage(size);
-              setPage(1);
-            }}
+            paginationResetDefaultPage={false}
+            persistTableHead
             highlightOnHover
             responsive
             noHeader
+            onChangePage={(newPage) => {
+              if (newPage !== page) {
+               
+                setPage(newPage);
+              }
+            }}
+            onChangeRowsPerPage={(newPerPage, newPage) => {
+              
+              setItemsPerPage(newPerPage);
+              setPage(newPage);
+            }}
           />
         )}
       </Card>
 
-      {/* View Order Modal */}
       {viewOpen && (
         <ViewOrder
           open={viewOpen}
@@ -175,14 +223,12 @@ export default function Orders() {
           orderId={viewOrderId}
         />
       )}
-
-      {/* Update Status Modal */}
       {updateOpen && (
         <OrderUpdate
           open={updateOpen}
           handleOpenClose={setUpdateOpen}
           orderId={updateOrderId}
-          refresh={fetchOrders}
+          refresh={() => fetchOrders(page, itemsPerPage)}
         />
       )}
     </div>
