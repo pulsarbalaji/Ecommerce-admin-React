@@ -52,6 +52,7 @@ export default function AdminUser() {
   }, []);
 
   useEffect(() => {
+    const timeout = setTimeout(() => {
     if (!search.trim()) {
       setFilteredUsers(users);
       return;
@@ -66,6 +67,8 @@ export default function AdminUser() {
           u.role?.toLowerCase().includes(lower)
       )
     );
+    }, 400);
+    return () => clearTimeout(timeout);
   }, [search, users]);
 
   const deleteUser = async () => {
@@ -165,7 +168,7 @@ export default function AdminUser() {
             + Add User
           </Button>
         </div>
-        <AddAdmin open={addOpen} handleOpenClose={setAddOpen} />
+        <AddAdmin open={addOpen} handleOpenClose={setAddOpen} refresh={fetchUsers} />
       </div>
 
       {/* DataTable - Responsive overflow on small screens */}
@@ -217,6 +220,7 @@ export default function AdminUser() {
           handleOpenClose={setEditOpen}
           key={editUserId}
           userId={editUserId}
+          refresh={fetchUsers}
         />
       )}
 

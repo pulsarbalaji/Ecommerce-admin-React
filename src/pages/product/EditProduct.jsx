@@ -17,6 +17,7 @@ import {
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import api from "@/utils/base_url";
 import toast from "react-hot-toast";
+import { useAuth } from "@/context/AuthContext";
 
 /* 🔹 Styled File Input with Preview (same as Category) */
 function StyledFileInput({
@@ -130,6 +131,8 @@ function StyledFileInput({
 
 /* 🔹 Edit Product Component */
 export default function EditProduct({ open, handleOpenClose, productId, refresh }) {
+  const { authData } = useAuth();
+  const admin = authData?.admin;
   const [form, setForm] = useState({
     product_name: "",
     product_description: "",
@@ -219,6 +222,7 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
       payload.append("quantity_unit", form.quantity_unit);
       payload.append("stock_quantity", form.stock_quantity);
       payload.append("is_available", form.is_available);
+      payload.append("updated_by", admin.user_id);
       if (form.product_image)
         payload.append("product_image", form.product_image);
 
@@ -227,8 +231,10 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
       });
 
       toast.success(res.data?.message || "Product updated successfully!");
-      refresh?.();
-      handleOpenClose(false);
+      setTimeout(() => {
+          handleOpenClose(false);
+          refresh?.();
+        }, 1000);
     } catch (err) {
       console.error(err);
       toast.error("Error updating product");

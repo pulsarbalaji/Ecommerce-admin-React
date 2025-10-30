@@ -14,8 +14,11 @@ import {
 } from "@material-tailwind/react";
 import api from "@/utils/base_url";
 import toast from "react-hot-toast";
+import { useAuth } from "@/context/AuthContext";
 
 export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
+  const { authData } = useAuth();
+  const admin = authData?.admin;
   const [form, setForm] = useState({
     offer_name: "",
     offer_percentage: "",
@@ -122,18 +125,20 @@ export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
         category: Number(form.category),
         product: Number(form.product),
         is_active: isActive,
+        updated_by: admin.user_id
       });
 
       toast.success(
-        `Offer updated successfully! ${
-          isActive
-            ? "It’s now active 🎉"
-            : "It will activate automatically on the start date ⏰"
+        `Offer updated successfully! ${isActive
+          ? "It’s now active 🎉"
+          : "It will activate automatically on the start date ⏰"
         }`
       );
 
-      refresh?.();
-      handleOpenClose(false);
+      setTimeout(() => {
+        handleOpenClose(false);
+        refresh?.();
+      }, 1000);
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.detail || "Error updating offer");
@@ -183,17 +188,17 @@ export default function EditOffer({ open, handleOpenClose, offerId, refresh }) {
                 min="1"
                 max="99"
                 value={form.offer_percentage}
-                 onChange={(e) => {
-                const val = e.target.value;
-                if (/^\d{0,2}$/.test(val)) {
-                  handleChange("offer_percentage", val);
-                }
-              }}
-              onKeyDown={(e) => {
-                if (["e", "E", "+", "-", "."].includes(e.key)) {
-                  e.preventDefault();
-                }
-              }}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (/^\d{0,2}$/.test(val)) {
+                    handleChange("offer_percentage", val);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (["e", "E", "+", "-", "."].includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
                 required
               />
 

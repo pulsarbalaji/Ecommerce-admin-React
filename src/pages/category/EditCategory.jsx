@@ -15,6 +15,7 @@ import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import api from "@/utils/base_url";
 import toast from "react-hot-toast";
+import { useAuth } from "@/context/AuthContext";
 
 /* 🔹 StyledFileInput (same style as AddCategory) */
 function StyledFileInput({
@@ -63,10 +64,10 @@ function StyledFileInput({
 
       <div
         className={`border rounded-md px-3 py-2.5 flex items-center gap-2 bg-white cursor-pointer transition-all duration-200 ${focused
-            ? "border-gray-800 shadow-sm"
-            : error
-              ? "border-red-500"
-              : "border-gray-300"
+          ? "border-gray-800 shadow-sm"
+          : error
+            ? "border-red-500"
+            : "border-gray-300"
           }`}
         onClick={() => inputRef.current?.click()}
         onFocus={() => setFocused(true)}
@@ -123,7 +124,8 @@ function StyledFileInput({
 
 /* 🔹 EditCategory component */
 export default function EditCategory({ open, handleOpenClose, categoryId, refresh }) {
-  const navigate = useNavigate();
+  const { authData } = useAuth();
+  const admin = authData?.admin;
   const [form, setForm] = useState({
     category_name: "",
     description: "",
@@ -155,6 +157,28 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
       .finally(() => setIsLoading(false));
   }, [categoryId, open]);
 
+  const validateForm = () => {
+    if (!form.category_name) {
+      toast.error("Category name is required");
+      return false;
+    }
+    if (!form.category_image) {
+      toast.error("Category image is required");
+      return false;
+    }
+    if (
+      form.category_image &&
+      !["image/jpeg", "image/png", "image/webp"].includes(form.category_image.type)
+    ) {
+      toast.error("Only JPEG, PNG or WEBP images are allowed");
+      return false;
+    }
+    if (form.category_image && form.category_image.size > 2 * 1024 * 1024) {
+      toast.error("Image must be less than 2MB");
+      return false;
+    }
+    return true;
+  };
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "description" && value.length > 3000) {
@@ -170,12 +194,14 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
     setIsSubmitting(true);
 
     try {
       const payload = new FormData();
       payload.append("category_name", form.category_name);
       payload.append("description", form.description);
+      payload.append("updated_by", admin.user_id);
       if (form.category_image) payload.append("category_image", form.category_image);
 
       const res = await api.put(`categories/${categoryId}/`, payload, {
@@ -183,8 +209,10 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
       });
 
       toast.success(res.data?.message || "Category updated successfully!");
-      refresh?.();
-      handleOpenClose(false);
+      setTimeout(() => {
+        handleOpenClose(false);
+        refresh?.();
+      }, 1000);
     } catch (err) {
       const errorMessage =
         err.response?.data?.message ||
@@ -271,18 +299,18 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
                 </Typography>
               </div>
 
-        {imageUrl && !form.category_image && (
-  <div className="md:col-span-2">
-    <p className="mb-2 font-medium">Current Image:</p>
-    <div className="w-72 h-48 border border-gray-300 rounded-md flex items-center justify-center bg-gray-50 overflow-hidden">
-      <img
-        src={imageUrl}
-        alt="Category"
-        className="max-w-full max-h-full object-contain"
-      />
-    </div>
-  </div>
-)}
+              {imageUrl && !form.category_image && (
+                <div className="md:col-span-2">
+                  <p className="mb-2 font-medium">Current Image:</p>
+                  <div className="w-72 h-48 border border-gray-300 rounded-md flex items-center justify-center bg-gray-50 overflow-hidden">
+                    <img
+                      src={imageUrl}
+                      alt="Category"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                </div>
+              )}
 
             </form>
           )}

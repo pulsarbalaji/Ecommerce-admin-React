@@ -14,7 +14,7 @@ import { useAuth } from "../../context/AuthContext";
 const VerifyOtp = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { session_id, email } = location.state || {};
+    const { session_id, email, password } = location.state || {};
     const { login } = useAuth(); // ✅ use context login
 
     const [otp, setOtp] = useState("");
@@ -54,8 +54,20 @@ const VerifyOtp = () => {
     const handleResend = async () => {
         setLoading(true);
         try {
-            await api.post("/resendloginotp/", { email });
-            toast.success("OTP resent to your WhatsApp!");
+            // Use email/password from state or props as appropriate
+            const response = await api.post("/adminlogin/", { email, password });
+            const data = response.data;
+            if (data?.session_id) {
+                // Redirect to OTP verification with correct payload
+                navigate("/auth/verify-otp", {
+                    state: {
+                        session_id: data.session_id,
+                        email,         // directly use the variables, or form.email
+                        password,      // same here
+                    },
+                });
+                toast.success("OTP resent to your WhatsApp!");
+            }
         } catch (err) {
             toast.error("Failed to resend OTP. Try again.");
         } finally {

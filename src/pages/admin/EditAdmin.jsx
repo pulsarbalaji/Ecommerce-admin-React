@@ -15,7 +15,7 @@ import {
 import api from "@/utils/base_url";
 import toast from "react-hot-toast";
 
-export default function EditAdmin({ open, handleOpenClose, userId }) {
+export default function EditAdmin({ open, handleOpenClose, userId ,refresh}) {
   const [form, setForm] = useState({
     full_name: "",
     email: "",
@@ -35,11 +35,28 @@ export default function EditAdmin({ open, handleOpenClose, userId }) {
     setIsLoading(true);
     api
       .get(`adminsdetails/${userId}/`)
-      .then((res) => setForm(res.data.data))
+      .then((res) => {
+        const user = res.data.data;
+        setForm({
+          ...user,
+          phone: user.phone ? String(user.phone) : "",
+        });
+      })
+
       .catch(() => showSnackbar("Error loading user.", "red"))
       .finally(() => setIsLoading(false));
   }, [userId, open]);
 
+  const isValidEmail = (email) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  // ✅ Allow only numbers & max 10 digits
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ""); // remove non-digits
+    if (value.length <= 10) {
+      setForm((prev) => ({ ...prev, phone: value }));
+    }
+  };
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -52,42 +69,55 @@ export default function EditAdmin({ open, handleOpenClose, userId }) {
 
 
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-  if (!form.full_name || !form.email || !form.role) {
-    toast.error("Please fill all required fields.");
-    setIsSubmitting(false);
-    return;
-  }
-
-  try {
-    const res = await api.put(`adminsdetails/${userId}/`, form);
-
-    toast.success(res.data?.message || "User updated successfully!");
-    setTimeout(() => handleOpenClose(false), 1500);
-  } catch (err) {
-    console.error("Error updating user:", err);
-
-    // ✅ Extract backend error message
-    const errorMessage =
-      err.response?.data?.message ||
-      err.response?.data?.errors ||
-      "Failed to update user.";
-
-    if (typeof errorMessage === "string") {
-      toast.error(errorMessage);
-    } else if (typeof errorMessage === "object") {
-      const firstError = Object.values(errorMessage)[0];
-      toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
-    } else {
-      toast.error("Something went wrong. Please try again.");
+    if (!form.email || !form.full_name || !form.phone) {
+      toast.error("Please fill all required fields.");
+      setIsSubmitting(false);
+      return;
     }
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+
+    if (!isValidEmail(form.email)) {
+      toast.error("Please enter a valid email address.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (form.phone.length !== 10) {
+      toast.error("Phone number must be exactly 10 digits.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const res = await api.put(`adminsdetails/${userId}/`, form);
+
+      toast.success(res.data?.message || "User updated successfully!");
+      setTimeout(() => handleOpenClose(false), 1500);
+      refresh?.();
+    } catch (err) {
+      console.error("Error updating user:", err);
+
+      // ✅ Extract backend error message
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.errors ||
+        "Failed to update user.";
+
+      if (typeof errorMessage === "string") {
+        toast.error(errorMessage);
+      } else if (typeof errorMessage === "object") {
+        const firstError = Object.values(errorMessage)[0];
+        toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
+      } else {
+        toast.error("Something went wrong. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
 
   const handleCancel = () => handleOpenClose(false);
@@ -97,7 +127,7 @@ const handleSubmit = async (e) => {
       <Dialog open={open} handler={handleOpenClose} size="md">
         <Card className="p-6 rounded-2xl shadow-lg">
           <DialogHeader className="flex justify-center font-semibold text-lg">
-            Edit User 
+            Edit User
           </DialogHeader>
           <DialogBody>
             {isLoading ? (
@@ -131,7 +161,8 @@ const handleSubmit = async (e) => {
                   label="Phone Number"
                   name="phone"
                   value={form.phone}
-                  onChange={handleChange}
+                  onChange={handlePhoneChange}
+                  required
                   fullWidth
                 />
                 <Select
@@ -176,9 +207,8 @@ const handleSubmit = async (e) => {
       {/* Snackbar notification */}
       {snackbar.show && (
         <div
-          className={`fixed top-5 right-5 z-50 rounded-md px-4 py-2 text-white shadow-lg ${
-            snackbar.color === "green" ? "bg-green-600" : "bg-red-600"
-          }`}
+          className={`fixed top-5 right-5 z-50 rounded-md px-4 py-2 text-white shadow-lg ${snackbar.color === "green" ? "bg-green-600" : "bg-red-600"
+            }`}
         >
           {snackbar.text}
         </div>

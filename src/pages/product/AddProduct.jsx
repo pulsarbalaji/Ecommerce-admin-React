@@ -234,8 +234,10 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
       });
 
       toast.success("✅ Product added successfully!");
-      handleOpenClose(false);
-      refresh?.();
+      setTimeout(() => {
+          handleOpenClose(false);
+          refresh?.();
+        }, 1000);
       setForm({
         product_name: "",
         product_description: "",

@@ -12,9 +12,9 @@ import {
     Spinner,
 } from "@material-tailwind/react";
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useNavigate } from "react-router-dom";
 import api from "@/utils/base_url";
 import toast from "react-hot-toast";
+import { useAuth } from "@/context/AuthContext";
 
 // Styled file input with proper file name display and clearing
 function StyledFileInput({
@@ -64,10 +64,10 @@ function StyledFileInput({
             {/* Input box */}
             <div
                 className={`border rounded-md px-3 py-2.5 flex items-center gap-2 bg-white cursor-pointer transition-all duration-200 ${focused
-                        ? "border-gray-800 shadow-sm"
-                        : error
-                            ? "border-red-500"
-                            : "border-gray-300"
+                    ? "border-gray-800 shadow-sm"
+                    : error
+                        ? "border-red-500"
+                        : "border-gray-300"
                     }`}
                 onClick={() => inputRef.current?.click()}
                 onFocus={() => setFocused(true)}
@@ -132,7 +132,8 @@ function StyledFileInput({
 
 
 export default function AddCategory({ open, handleOpenClose, refresh }) {
-    const navigate = useNavigate();
+    const { authData } = useAuth();
+      const admin = authData?.admin;
 
     const [form, setForm] = useState({
         category_name: "",
@@ -208,6 +209,7 @@ export default function AddCategory({ open, handleOpenClose, refresh }) {
             const payload = new FormData();
             payload.append("category_name", form.category_name);
             payload.append("description", form.description);
+            payload.append("created_by", admin.user_id);
             if (form.category_image)
                 payload.append("category_image", form.category_image);
 
@@ -217,8 +219,10 @@ export default function AddCategory({ open, handleOpenClose, refresh }) {
 
             // ✅ Success
             toast.success(res.data?.message || "Category added successfully!");
-            handleOpenClose(false);
-            refresh?.();
+            setTimeout(() => {
+                handleOpenClose(false);
+                refresh?.();
+            }, 1000);
             setForm({ category_name: "", description: "", category_image: null });
         } catch (err) {
             console.error("Error adding category:", err);

@@ -175,8 +175,10 @@ export default function AddOffer({ open, handleOpenClose, refresh }) {
 
       await api.post("offers/", payload);
       toast.success("Offer(s) added successfully!");
-      handleOpenClose(false);
-      refresh?.();
+      setTimeout(() => {
+          handleOpenClose(false);
+          refresh?.();
+        }, 1000);
       resetForm();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to add offer(s)");

@@ -56,7 +56,7 @@ export function SignIn() {
       if (data?.session_id) {
         // Redirect to OTP verification
         navigate("/auth/verify-otp", {
-          state: { session_id: data.session_id, email: form.email },
+          state: { session_id: data.session_id, email: form.email ,password: form.password,},
         });
       } else {
         throw new Error(data?.message || "Something went wrong");

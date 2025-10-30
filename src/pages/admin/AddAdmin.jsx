@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "@/utils/base_url";
 
-export default function AddAdmin({ open, handleOpenClose }) {
+export default function AddAdmin({ open, handleOpenClose ,refresh}) {
   const [form, setForm] = useState({
     email: "",
     fullName: "",
@@ -96,7 +96,7 @@ export default function AddAdmin({ open, handleOpenClose }) {
         toast.success("Admin added successfully. Password setup email sent");
         setTimeout(() => {
           handleOpenClose(false);
-          navigate("/dashboard/AdminUser");
+          refresh?.();
         }, 1000);
       } else {
         toast.error("Unexpected server response. Please try again.");
