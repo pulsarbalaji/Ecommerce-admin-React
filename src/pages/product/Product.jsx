@@ -145,16 +145,26 @@ export default function Product() {
       cell: (row) => <span className="font-semibold">₹{row.price}</span>,
     },
     {
+      name: "Quantity",
+      selector: (row) => `${row.quantity} ${row.quantity_unit}`,
+      sortable: true,
+      cell: (row) => (
+        <span className="font-medium">
+          {row.quantity} {row.quantity_unit}
+        </span>
+      ),
+    },
+
+    {
       name: "Stock",
       selector: (row) => row.stock_quantity,
       sortable: true,
       cell: (row) => (
         <span
-          className={`px-2 py-1 text-xs rounded-full ${
-            row.stock_quantity > 0
+          className={`px-2 py-1 text-xs rounded-full ${row.stock_quantity > 0
               ? "bg-green-100 text-green-800"
               : "bg-red-100 text-red-700"
-          }`}
+            }`}
         >
           {row.stock_quantity > 0 ? row.stock_quantity : "Out of stock"}
         </span>
@@ -166,26 +176,16 @@ export default function Product() {
       sortable: true,
       cell: (row) => (
         <span
-          className={`px-2 py-1 text-xs rounded-full ${
-            row.is_available
+          className={`px-2 py-1 text-xs rounded-full ${row.is_available
               ? "bg-green-100 text-green-700"
               : "bg-red-100 text-red-700"
-          }`}
+            }`}
         >
           {row.is_available ? "Available" : "Not Avaialable"}
         </span>
       ),
     },
-     {
-      name: "Avg. Rating",
-      selector: (row) => row.average_rating,
-      sortable: true,
-      cell: (row) => (
-        <span className="text-yellow-600">
-          ⭐ {Number(row.average_rating || 0).toFixed(1)}
-        </span>
-      ),
-    },
+   
     {
       name: "Actions",
       cell: (row) => (

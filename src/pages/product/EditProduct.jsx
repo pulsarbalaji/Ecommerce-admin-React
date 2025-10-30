@@ -66,10 +66,10 @@ function StyledFileInput({
 
       <div
         className={`border rounded-md px-3 py-2.5 flex items-center gap-2 bg-white cursor-pointer transition-all duration-200 ${focused
-            ? "border-gray-800 shadow-sm"
-            : error
-              ? "border-red-500"
-              : "border-gray-300"
+          ? "border-gray-800 shadow-sm"
+          : error
+            ? "border-red-500"
+            : "border-gray-300"
           }`}
         onClick={() => inputRef.current?.click()}
         onFocus={() => setFocused(true)}
@@ -136,6 +136,8 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
     category: "",
     price: "",
     stock_quantity: "",
+    quantity: "",
+    quantity_unit: "",
     product_image: null,
     is_available: false,
   });
@@ -143,6 +145,8 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
   const [existingFileName, setExistingFileName] = useState("");
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [errors, setErrors] = useState({});
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
@@ -163,6 +167,8 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
           product_description: productData.product_description,
           category: String(productData.category),
           price: productData.price,
+          quantity: productData.quantity,
+          quantity_unit: productData.quantity_unit,
           stock_quantity: productData.stock_quantity,
           product_image: null,
           is_available: productData.is_available || false,
@@ -182,6 +188,14 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
 
   const handleChange = (e) => {
     const { name, value, files, type, checked } = e.target;
+
+    // Prevent negative values for specific numeric fields
+    const numericFields = ["price", "stock_quantity", "quantity"];
+    if (numericFields.includes(name)) {
+      const numValue = Number(value);
+      if (numValue < 0) return; // Block negative input
+    }
+
     if (name === "product_image") {
       setForm((prev) => ({ ...prev, product_image: files?.[0] || null }));
     } else if (type === "checkbox") {
@@ -190,6 +204,7 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
       setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -200,6 +215,8 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
       payload.append("product_description", form.product_description);
       payload.append("category", form.category);
       payload.append("price", form.price);
+      payload.append("quantity", form.quantity);
+      payload.append("quantity_unit", form.quantity_unit);
       payload.append("stock_quantity", form.stock_quantity);
       payload.append("is_available", form.is_available);
       if (form.product_image)
@@ -240,7 +257,7 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
       <Card className="p-6 rounded-2xl shadow-lg">
         <DialogHeader className="justify-center">
           <Typography variant="h5" color="blue-gray" className="font-semibold">
-            Edit Product 
+            Edit Product
           </Typography>
         </DialogHeader>
 
@@ -280,27 +297,6 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
                   </Option>
                 ))}
               </Select>
-
-              <Input
-                label="Price"
-                name="price"
-                type="number"
-                min="0"
-                value={form.price}
-                onChange={handleChange}
-                required
-              />
-
-              <Input
-                label="Stock Quantity"
-                name="stock_quantity"
-                type="number"
-                min="0"
-                value={form.stock_quantity}
-                onChange={handleChange}
-                required
-              />
-
               <StyledFileInput
                 label="Product Image"
                 name="product_image"
@@ -315,6 +311,50 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
                   )
                 }
                 helperText="Only JPEG, PNG, or WEBP images allowed"
+              />
+
+              <Input
+                label="Price"
+                name="price"
+                type="number"
+                min="0"
+                value={form.price}
+                onChange={handleChange}
+                required
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Input
+                  label="Quantity"
+                  name="quantity"
+                  type="number"
+                  min="0"
+                  onInput={(e) => e.target.value = Math.max(0, e.target.value)}
+                  value={form.quantity}
+                  onChange={handleChange}
+                  required
+                />
+
+
+                <Select
+                  label="Quantity Unit *"
+                  value={form.quantity_unit}
+                  onChange={(v) => setForm((p) => ({ ...p, quantity_unit: v }))}
+                >
+                  {["ml", "liter", "g", "kg", "piece", "pack"].map((u) => (
+                    <Option key={u} value={u}>{u.toUpperCase()}</Option>
+                  ))}
+                </Select>
+
+              </div>
+              <Input
+                label="Stock Quantity"
+                name="stock_quantity"
+                type="number"
+                min="0"
+                max="100"
+                value={form.stock_quantity}
+                onChange={handleChange}
+                required
               />
 
               <div className="flex items-center justify-start  gap-3">

@@ -139,6 +139,8 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
     category: "",
     price: "",
     stock_quantity: "",
+    quantity: "",
+    quantity_unit: "",
     product_image: null,
   });
 
@@ -174,6 +176,12 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
     if (!form.stock_quantity) newErrors.stock_quantity = "Stock quantity is required.";
     else if (parseInt(form.stock_quantity) < 0)
       newErrors.stock_quantity = "Stock quantity cannot be negative.";
+
+    if (!form.quantity) newErrors.quantity = "quantity is required.";
+    else if (parseInt(form.quantity) < 0)
+      newErrors.quantity = "quantity cannot be negative.";
+
+    if (!form.quantity_unit) newErrors.quantity_unit = "Quantity Unit is required.";
 
     // Use exact same logic as your AddCategory for images
     if (!form.product_image) newErrors.product_image = "Product image is required.";
@@ -215,6 +223,8 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
       payload.append("category", form.category);
       payload.append("price", form.price);
       payload.append("stock_quantity", form.stock_quantity);
+      payload.append("quantity", form.quantity);
+      payload.append("quantity_unit", form.quantity_unit);
       payload.append("is_available", true);
       payload.append("created_by", admin.user_id);
       if (form.product_image) payload.append("product_image", form.product_image);
@@ -232,6 +242,8 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
         category: "",
         price: "",
         stock_quantity: "",
+        quantity: "",
+        quantity_unit: "",
         product_image: null,
       });
       setErrors({});
@@ -252,6 +264,8 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
         product_description: "",
         category: "",
         price: "",
+        quantity: "",
+        quantity_unit: "",
         stock_quantity: "",
         product_image: null,
       });
@@ -340,6 +354,49 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
             />
 
             {/* Stock Quantity */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input
+                label="Quantity"
+                name="quantity"
+                type="number"
+                min="0"
+                max="1000"
+                value={form.quantity}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "" || (Number(value) >= 0 && Number(value) <= 1000)) {
+                    handleChange(e);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+                }}
+                error={!!errors.quantity}
+                required
+              />
+              <Select
+                label={
+                  <span>
+                    Select Unit<span className="text-red-500">*</span>
+                  </span>
+                }
+                name="quantity_unit"
+                value={form.quantity_unit}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, quantity_unit: val }))
+                }
+                error={!!errors.quantity_unit}
+                required
+              >
+                {["ml", "liter", "g", "kg", "piece", "pack"].map((unit) => (
+                  <Option key={unit} value={unit}>
+                    {unit.toUpperCase()}
+                  </Option>
+                ))}
+
+              </Select>
+
+            </div>
             <Input
               label="Stock Quantity"
               name="stock_quantity"
