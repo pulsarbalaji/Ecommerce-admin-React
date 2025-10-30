@@ -22,7 +22,7 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
 
   const statusOptions = [
     { value: "pending", label: "Pending" },
-    { value: "processing", label: "Processing" },
+    { value: "order_confirmed", label: "Order Confirmed" },
     { value: "shipped", label: "Shipped" },
     { value: "delivered", label: "Delivered" },
     { value: "cancelled", label: "Cancelled" },

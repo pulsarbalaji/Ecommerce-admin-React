@@ -33,11 +33,19 @@ export default function Orders() {
 
   const orderStatusColor = {
     pending: "yellow",
-    processing: "blue",
+    order_confirmed: "blue",
     shipped: "blue",
     delivered: "green",
     cancelled: "red",
     returned: "red",
+  };
+  const formatStatus = (status) => {
+    if (!status) return "";
+
+    return status
+      .split("_")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
 
   const paymentStatusColor = {
@@ -52,7 +60,7 @@ export default function Orders() {
       if (isFetching.current) return;
       isFetching.current = true;
 
-      
+
       setLoading(true);
 
       try {
@@ -114,11 +122,12 @@ export default function Orders() {
         cell: (row) => (
           <Chip
             color={orderStatusColor[row.status] || "gray"}
-            value={row.status.charAt(0).toUpperCase() + row.status.slice(1)}
+            value={formatStatus(row.status)}
             size="sm"
           />
         ),
       },
+
       {
         name: "Payment Status",
         selector: (row) => row.payment_status,
@@ -203,12 +212,12 @@ export default function Orders() {
             noHeader
             onChangePage={(newPage) => {
               if (newPage !== page) {
-               
+
                 setPage(newPage);
               }
             }}
             onChangeRowsPerPage={(newPerPage, newPage) => {
-              
+
               setItemsPerPage(newPerPage);
               setPage(newPage);
             }}

@@ -20,12 +20,21 @@ export default function ViewOrder({ orderId, open, handleOpenClose }) {
 
   const orderStatusColor = {
     pending: "amber",
-    processing: "blue",
+    order_confirmed: "blue",
     shipped: "blue",
     delivered: "green",
     cancelled: "red",
     returned: "yellow",
   };
+  const formatStatus = (status) => {
+    if (!status) return "";
+
+    return status
+      .split("_")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
 
   const paymentStatusColor = {
     pending: "amber",
@@ -112,10 +121,10 @@ export default function ViewOrder({ orderId, open, handleOpenClose }) {
       className="bg-white p-0"
     >
       <DialogHeader className="justify-center">
-                <Typography variant="h5" color="blue-gray" className="font-semibold">
-                  View Product 👁️
-                </Typography>
-              </DialogHeader>
+        <Typography variant="h5" color="blue-gray" className="font-semibold">
+          View Product 👁️
+        </Typography>
+      </DialogHeader>
       <DialogBody divider>
         {loading ? (
           <div className="text-center py-6 flex justify-center items-center gap-2">
@@ -135,10 +144,11 @@ export default function ViewOrder({ orderId, open, handleOpenClose }) {
                 <strong>Order Status:</strong>
                 <Chip
                   color={orderStatusColor[order.status]}
-                  value={order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  value={formatStatus(order.status)}
                   size="sm"
                   className="font-medium"
                 />
+
               </div>
 
               <div>
