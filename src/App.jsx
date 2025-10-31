@@ -13,14 +13,25 @@ function App() {
       <Route
         path="/dashboard/*"
         element={
-          <ProtectedRoute isAuthenticated={isAuthenticated}>
+          <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
         }
       />
       <Route path="/auth/*" element={<Auth />} />
-      <Route path="*" element={<Navigate to="/dashboard/home" replace />} />
       <Route path="/auth/verify-otp" element={<VerifyOtp />} />
+
+      {/* Catch-all fallback */}
+      <Route
+        path="*"
+        element={
+          isAuthenticated ? (
+            <Navigate to="/dashboard/home" replace />
+          ) : (
+            <Navigate to="/auth/sign-in" replace />
+          )
+        }
+      />
     </Routes>
   );
 }

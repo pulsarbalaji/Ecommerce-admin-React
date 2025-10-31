@@ -6,7 +6,6 @@ import { ThemeProvider } from "@material-tailwind/react";
 import { MaterialTailwindControllerProvider } from "@/context";
 import "../public/css/tailwind.css";
 import { AuthProvider } from "../src/context/AuthContext";
-import { Toaster } from "react-hot-toast";
 import ToastContainer from "../src/widgets/layout/ToastContainer";
 
 

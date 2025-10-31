@@ -1,30 +1,19 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useState, useContext } from "react";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  // ✅ Load from sessionStorage immediately (no async delay)
+  const storedAccess = sessionStorage.getItem("access");
+  const storedRefresh = sessionStorage.getItem("refresh");
+  const storedAdmin = sessionStorage.getItem("admin");
+
   const [authData, setAuthData] = useState({
-    access: null,
-    refresh: null,
-    admin: null,
+    access: storedAccess,
+    refresh: storedRefresh,
+    admin: storedAdmin ? JSON.parse(storedAdmin) : null,
   });
 
-  // ✅ Always load from sessionStorage only
-  useEffect(() => {
-    const storedAccess = sessionStorage.getItem("access");
-    const storedRefresh = sessionStorage.getItem("refresh");
-    const storedAdmin = sessionStorage.getItem("admin");
-
-    if (storedAccess && storedRefresh && storedAdmin) {
-      setAuthData({
-        access: storedAccess,
-        refresh: storedRefresh,
-        admin: JSON.parse(storedAdmin),
-      });
-    }
-  }, []);
-
-  // ✅ Mandatory sessionStorage
   const login = (data) => {
     sessionStorage.setItem("access", data.access);
     sessionStorage.setItem("refresh", data.refresh);
@@ -44,7 +33,5 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// ✅ Custom hook
 export const useAuth = () => useContext(AuthContext);
-
 export default AuthContext;
