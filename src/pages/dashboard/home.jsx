@@ -36,11 +36,19 @@ const currencyFormatter = (value) =>
     Number(value)
   );
 
+const formatStatus = (status) => {
+  if (!status) return "";
+
+  return status
+    .split("_")
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
 const statusColor = (status) => {
   switch (status) {
     case "pending":
       return "text-yellow-600";
-    case "processing":
+    case "order_confirmed":
       return "text-blue-600";
     case "shipped":
       return "text-purple-600";
@@ -148,7 +156,8 @@ const Home = () => {
           Sales (Last 7 Days)
         </Typography>
         <ResponsiveContainer width="100%" height={250}>
-          <LineChart data={sales_chart}>
+          <LineChart data={sales_chart}
+           margin={{ top: 10, right: 20, left: 40, bottom: 10 }}>
             <XAxis dataKey="date" />
             <YAxis
               tickFormatter={(value) => currencyFormatter(value)}
@@ -225,14 +234,13 @@ const Home = () => {
                   <td className="px-4 py-2">
                     {currencyFormatter(o.total_amount)}
                   </td>
-                  <td
-                    className={`px-4 py-2 font-medium ${statusColor(
-                      o.order_status
-                    )}`}
-                  >
-                    {o.order_status.charAt(0).toUpperCase() +
-                      o.order_status.slice(1)}
+                  <td className={`px-4 py-2 font-medium ${statusColor(o.order_status)}`}>
+                    {formatStatus(o.order_status)}
                   </td>
+                  <td className="px-4 py-2">
+                    {new Date(o.ordered_at).toLocaleString()}
+                  </td>
+
                   <td className="px-4 py-2">
                     {new Date(o.ordered_at).toLocaleString()}
                   </td>
@@ -246,77 +254,77 @@ const Home = () => {
       {/* --- Low Stock & New Customers --- */}
       <div className="grid md:grid-cols-2 gap-6">
 
-  {/* Low Stock Products */}
-  <Card className="p-6 border shadow-sm bg-gradient-to-br from-red-50 to-red-100">
-    <Typography variant="h6" className="mb-4 font-semibold text-red-700">
-      Low Stock Products
-    </Typography>
-    <ul className="space-y-3">
-      {low_stock_products.length ? low_stock_products.map((p) => {
-        let badgeColor = "bg-green-200 text-green-800";
-        if (p.stock_quantity <= 2) badgeColor = "bg-red-500 text-white";
-        else if (p.stock_quantity <= 5) badgeColor = "bg-orange-300 text-orange-900";
+        {/* Low Stock Products */}
+        <Card className="p-6 border shadow-sm bg-gradient-to-br from-red-50 to-red-100">
+          <Typography variant="h6" className="mb-4 font-semibold text-red-700">
+            Low Stock Products
+          </Typography>
+          <ul className="space-y-3">
+            {low_stock_products.length ? low_stock_products.map((p) => {
+              let badgeColor = "bg-green-200 text-green-800";
+              if (p.stock_quantity <= 2) badgeColor = "bg-red-500 text-white";
+              else if (p.stock_quantity <= 5) badgeColor = "bg-orange-300 text-orange-900";
 
-        return (
-          <li key={p.id} className="flex justify-between items-center">
-            <div>
-              <Typography variant="small" className="font-semibold text-gray-700">
-                {p.product_name}
+              return (
+                <li key={p.id} className="flex justify-between items-center">
+                  <div>
+                    <Typography variant="small" className="font-semibold text-gray-700">
+                      {p.product_name}
+                    </Typography>
+                    <Typography variant="tiny" className="text-gray-500">
+                      {p.category_name}
+                    </Typography>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${badgeColor}`}>
+                    {p.stock_quantity} left
+                  </span>
+                </li>
+              );
+            }) : (
+              <Typography variant="small" className="text-gray-500">
+                All products sufficiently stocked.
               </Typography>
-              <Typography variant="tiny" className="text-gray-500">
-                {p.category_name}
-              </Typography>
-            </div>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${badgeColor}`}>
-              {p.stock_quantity} left
-            </span>
-          </li>
-        );
-      }) : (
-        <Typography variant="small" className="text-gray-500">
-          All products sufficiently stocked.
-        </Typography>
-      )}
-    </ul>
-  </Card>
+            )}
+          </ul>
+        </Card>
 
-  {/* New Customers */}
-  <Card className="p-6 border shadow-sm bg-gradient-to-br from-blue-50 to-blue-100">
-    <Typography variant="h6" className="mb-4 font-semibold text-blue-700">
-      New Customers (Last 7 Days)
-    </Typography>
-    <ul className="space-y-3">
-      {new_customers.length ? new_customers.map((c) => {
-        // Generate initials
-        const initials = c.full_name.split(" ").map(n => n[0]).join("").toUpperCase();
-        return (
-          <li key={c.id} className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex items-center justify-center font-bold">
-                {initials}
-              </div>
-              <div>
-                <Typography variant="small" className="font-medium text-gray-700">
-                  {c.full_name}
-                </Typography>
-                <Typography variant="tiny" className="text-gray-500">
-                  {c.email}
-                </Typography>
-              </div>
-            </div>
-            <Typography variant="tiny" className="text-gray-400">
-              {new Date(c.created_at).toLocaleDateString()}
-            </Typography>
-          </li>
-        );
-      }) : (
-        <Typography variant="small" className="text-gray-500">
-          No new signups this week.
-        </Typography>
-      )}
-    </ul>
-  </Card>
-</div>
+        {/* New Customers */}
+        <Card className="p-6 border shadow-sm bg-gradient-to-br from-blue-50 to-blue-100">
+          <Typography variant="h6" className="mb-4 font-semibold text-blue-700">
+            New Customers (Last 7 Days)
+          </Typography>
+          <ul className="space-y-3">
+            {new_customers.length ? new_customers.map((c) => {
+              // Generate initials
+              const initials = c.full_name.split(" ").map(n => n[0]).join("").toUpperCase();
+              return (
+                <li key={c.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-400 text-white flex items-center justify-center font-bold">
+                      {initials}
+                    </div>
+                    <div>
+                      <Typography variant="small" className="font-medium text-gray-700">
+                        {c.full_name}
+                      </Typography>
+                      <Typography variant="tiny" className="text-gray-500">
+                        {c.email}
+                      </Typography>
+                    </div>
+                  </div>
+                  <Typography variant="tiny" className="text-gray-400">
+                    {new Date(c.created_at).toLocaleDateString()}
+                  </Typography>
+                </li>
+              );
+            }) : (
+              <Typography variant="small" className="text-gray-500">
+                No new signups this week.
+              </Typography>
+            )}
+          </ul>
+        </Card>
+      </div>
     </div>
   );
 };

@@ -233,7 +233,7 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      toast.success("✅ Product added successfully!");
+      toast.success("Product added successfully!");
       setTimeout(() => {
           handleOpenClose(false);
           refresh?.();
@@ -251,7 +251,7 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
       setErrors({});
     } catch (err) {
       console.error("Error adding product:", err);
-      toast.error("❌ Failed to add product.");
+      toast.error("Failed to add product.");
     } finally {
       setIsSubmitting(false);
     }

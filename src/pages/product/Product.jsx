@@ -36,21 +36,38 @@ export default function Product() {
   const [editOpen, setEditOpen] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
   const [viewProductId, setViewProductId] = useState(null);
+  const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalProducts, setTotalCustomers] = useState(0);
   const backendBaseUrl = import.meta.env.VITE_API_URL;
 
   // Fetch products
-  const fetchProducts = async () => {
+  const fetchProducts = async (pageNumber = page, pageSize = itemsPerPage) => {
     setLoading(true);
     try {
-      const response = await api.get("product/");
+      const response = await api.get("product/", {
+        params: { page: pageNumber, page_size: pageSize },
+      });
       // Normalized to your backend: results.data.data or results.data
       const data =
         response.data?.results?.data?.data ||
         response.data?.results?.data ||
         response.data?.data ||
         [];
+
+      // ✅ set products
       setProducts(data);
       setFilteredProducts(data);
+
+      // ✅ Extract total count properly
+      const total =
+        response.data?.results?.total ||
+        response.data?.total ||
+        response.data?.count ||
+        data.length;
+
+      setTotalCustomers(total); // must be a NUMBER
+
     } catch (err) {
       console.error("Error fetching products:", err);
       toast.error("Failed to load products");
@@ -61,7 +78,7 @@ export default function Product() {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [page, itemsPerPage]);
 
   // Live client-side filtering (like AdminUser)
   useEffect(() => {
@@ -162,8 +179,8 @@ export default function Product() {
       cell: (row) => (
         <span
           className={`px-2 py-1 text-xs rounded-full ${row.stock_quantity > 0
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-700"
+            ? "bg-green-100 text-green-800"
+            : "bg-red-100 text-red-700"
             }`}
         >
           {row.stock_quantity > 0 ? row.stock_quantity : "Out of stock"}
@@ -177,15 +194,15 @@ export default function Product() {
       cell: (row) => (
         <span
           className={`px-2 py-1 text-xs rounded-full ${row.is_available
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
+            ? "bg-green-100 text-green-700"
+            : "bg-red-100 text-red-700"
             }`}
         >
           {row.is_available ? "Available" : "Not Avaialable"}
         </span>
       ),
     },
-   
+
     {
       name: "Actions",
       cell: (row) => (
@@ -264,12 +281,23 @@ export default function Product() {
         ) : (
           <div className="overflow-x-auto">
             <DataTable
+              key={`${page}-${itemsPerPage}`}
               columns={columns}
               data={filteredProducts}
               pagination
+              paginationServer
+              paginationTotalRows={totalProducts}
+              paginationPerPage={itemsPerPage}  // ✅ required
+              paginationDefaultPage={page}
+              onChangePage={(p) => setPage(p)}
+              onChangeRowsPerPage={(size, p) => {
+                setItemsPerPage(size);
+                setPage(p);
+              }}
               highlightOnHover
               responsive
-              noDataComponent="No products found."
+              noDataComponent="No Product found."
+              noHeader
             />
           </div>
         )}

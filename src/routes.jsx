@@ -71,18 +71,6 @@ export const routes = [
         element: <Orders />,
       },
       {
-        icon: <UsersIcon {...icon} />,
-        name: "Customer Details",
-        path: "/customer_details",
-        element: <Customers />,
-      },
-      {
-        icon: <PhoneIcon {...icon} />,
-        name: "Contact Us Details",
-        path: "/contact_us",
-        element: <ContactUs />,
-      },
-      {
         icon: <ReceiptPercentIcon {...icon} />,
         name: "GST Setting",
         path: "/gst_setting",
@@ -93,6 +81,18 @@ export const routes = [
         name: "Courier Charge Setting",
         path: "/courier_setting",
         element: <CourierSetting />,
+      },
+      {
+        icon: <UsersIcon {...icon} />,
+        name: "Customer Details",
+        path: "/customer_details",
+        element: <Customers />,
+      },
+      {
+        icon: <PhoneIcon {...icon} />,
+        name: "Contact Us Details",
+        path: "/contact_us",
+        element: <ContactUs />,
       },
     ],
   },
