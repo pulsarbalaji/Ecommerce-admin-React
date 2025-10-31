@@ -55,9 +55,13 @@ export default function Product() {
         response.data?.data ||
         [];
 
-      // ✅ set products
-      setProducts(data);
-      setFilteredProducts(data);
+      // ✅ Clean & set products safely
+      const cleanData = (Array.isArray(data) ? data : []).filter(
+        (item) => item && item.id
+      );
+      setProducts(cleanData);
+      setFilteredProducts(cleanData);
+
 
       // ✅ Extract total count properly
       const total =
