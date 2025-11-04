@@ -10,6 +10,8 @@ import {
   UsersIcon,
   ReceiptPercentIcon,
   TruckIcon,
+  PuzzlePieceIcon,
+  CubeIcon,
 } from "@heroicons/react/24/solid";
 import Home from "./pages/dashboard/Home";
 
@@ -25,6 +27,7 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import GSTSetting from "./pages/gst/GSTSetting";
 import CourierSetting from "./pages/courierCharge/CourierChargeSetting";
+import ProductVariant from "./pages/productVariant/productVariant";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -37,61 +40,73 @@ export const routes = [
       {
         icon: <HomeIcon {...icon} />,
         name: "dashboard",
-        path: "/home",
+        path: "home",
         element: <Home />,
       },
       {
         icon: <UserGroupIcon  {...icon} />,
         name: "admin",
-        path: "/AdminUser",
+        path: "AdminUser",
         element: <AdminUser />,
       },
       {
         icon: <Squares2X2Icon  {...icon} />,
         name: "category",
-        path: "/category",
+        path: "category",
         element: <Category />,
       },
       {
-        icon: <ShoppingBagIcon  {...icon} />,
+        icon: <ShoppingBagIcon {...icon} />,
         name: "Product",
-        path: "/product",
-        element: <Product />,
+        subRoutes: [
+          {
+            icon: <CubeIcon {...icon} />,
+            name: "Product",
+            path: "product",
+            element: <Product />,
+          },
+          {
+            icon: <PuzzlePieceIcon {...icon} />,
+            name: "Product Variant",
+            path: "product-variant",
+            element: <ProductVariant />,
+          },
+        ],
       },
       {
         icon: <TagIcon {...icon} />,
         name: "Offers",
-        path: "/offer",
+        path: "offer",
         element: <Offer />,
       },
       {
         icon: <ShoppingCartIcon {...icon} />,
         name: "Orders",
-        path: "/orders",
+        path: "orders",
         element: <Orders />,
       },
       {
         icon: <ReceiptPercentIcon {...icon} />,
         name: "GST Setting",
-        path: "/gst_setting",
+        path: "gst_setting",
         element: <GSTSetting />,
       },
       {
         icon: <TruckIcon {...icon} />,
         name: "Courier Charge Setting",
-        path: "/courier_setting",
+        path: "courier_setting",
         element: <CourierSetting />,
       },
       {
         icon: <UsersIcon {...icon} />,
         name: "Customer Details",
-        path: "/customer_details",
+        path: "customer_details",
         element: <Customers />,
       },
       {
         icon: <PhoneIcon {...icon} />,
         name: "Contact Us Details",
-        path: "/contact_us",
+        path: "contact_us",
         element: <ContactUs />,
       },
     ],
