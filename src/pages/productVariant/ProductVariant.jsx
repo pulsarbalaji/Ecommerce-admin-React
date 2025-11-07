@@ -136,6 +136,16 @@ export default function ProductVariant() {
             sortable: true,
         },
         {
+            name: "Quantity",
+            selector: (row) => `${row.quantity} ${row.quantity_unit}`,
+            sortable: true,
+            cell: (row) => (
+                <span className="font-medium">
+                    {row.quantity} {row.quantity_unit}
+                </span>
+            ),
+        },
+        {
             name: "Stock",
             selector: (row) => row.stock_quantity,
             cell: (row) => (
@@ -146,6 +156,21 @@ export default function ProductVariant() {
                         }`}
                 >
                     {row.stock_quantity > 0 ? row.stock_quantity : "Out of stock"}
+                </span>
+            ),
+        },
+        {
+            name: "Availability",
+            selector: (row) => row.is_available ? "Yes" : "No",
+            sortable: true,
+            cell: (row) => (
+                <span
+                    className={`px-2 py-1 text-xs rounded-full ${row.is_available
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                        }`}
+                >
+                    {row.is_available ? "Available" : "Not Avaialable"}
                 </span>
             ),
         },
@@ -162,7 +187,7 @@ export default function ProductVariant() {
                             setEditOpen(true);
                         }}
                     >
-                         <PencilIcon className="h-4 w-4" />
+                        <PencilIcon className="h-4 w-4" />
                     </IconButton>
                     <IconButton
                         size="sm"

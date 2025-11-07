@@ -66,9 +66,8 @@ export default function ViewProduct({ open, handleOpenClose, productId }) {
       stars.push(
         <StarIcon
           key={i}
-          className={`h-5 w-5 ${
-            i <= rating ? "text-yellow-500" : "text-gray-300"
-          }`}
+          className={`h-5 w-5 ${i <= rating ? "text-yellow-500" : "text-gray-300"
+            }`}
         />
       );
     }
@@ -93,7 +92,7 @@ export default function ViewProduct({ open, handleOpenClose, productId }) {
             <div className="text-center text-red-500 py-4">{error}</div>
           ) : product ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              
+
               <div>
                 <p><strong>Product Name:</strong> {product.product_name}</p>
               </div>
@@ -131,9 +130,12 @@ export default function ViewProduct({ open, handleOpenClose, productId }) {
               <div className="md:col-span-2">
                 <p>
                   <strong>Description:</strong>{" "}
-                  {product.product_description || "—"}
+                  <span className="whitespace-pre-line">
+                    {product.product_description || "—"}
+                  </span>
                 </p>
               </div>
+
 
               <div>
                 <p><strong>Created By:</strong> {product.created_by_name || "—"}</p>

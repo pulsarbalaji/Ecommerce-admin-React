@@ -68,7 +68,7 @@ const statIcons = {
   total_orders: <ShoppingBagIcon className="w-6 h-6 text-white" />,
   total_customers: <UsersIcon className="w-6 h-6 text-white" />,
   total_products: <ShoppingBagIcon className="w-6 h-6 text-white" />,
-  pending_orders: <ClockIcon className="w-6 h-6 text-white" />,
+  confirmed_orders: <ClockIcon className="w-6 h-6 text-white" />,
   cancelled_orders: <XCircleIcon className="w-6 h-6 text-white" />,
 };
 
@@ -119,7 +119,7 @@ const Home = () => {
               key={key}
               className="p-4 flex items-center gap-4 shadow-sm border"
             >
-              <div className="bg-blue-500 rounded-full w-10 h-10 flex items-center justify-center">
+              <div className="bg-gray-500 rounded-full w-10 h-10 flex items-center justify-center">
                 {statIcons[key]}
               </div>
 
@@ -137,9 +137,9 @@ const Home = () => {
                     <ArrowDownIcon className="w-4 h-4 text-red-500" />
                   )}
                 </div>
-                {key === "pending_orders" && (
+                {key === "order_confirmed_orders" && (
                   <Progress
-                    value={(stats.pending_orders / stats.total_orders) * 100}
+                    value={(stats.order_confirmed_orders / stats.total_orders) * 100}
                     className="mt-2 h-2"
                     color="blue"
                   />

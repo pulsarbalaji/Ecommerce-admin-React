@@ -210,11 +210,13 @@ export default function Product() {
     {
       name: "Actions",
       cell: (row) => (
-        <div className="flex flex-wrap gap-1 justify-center">
+        <div className="flex justify-center items-center gap-2">
+
           <IconButton
             size="sm"
             variant="text"
             color="blue"
+            className="!p-1.5"
             onClick={() => {
               setEditProductId(row.id);
               setEditOpen(true);
@@ -226,6 +228,7 @@ export default function Product() {
             size="sm"
             variant="text"
             color="red"
+            className="!p-1.5"
             onClick={() => {
               setSelectedProduct(row);
               setDeleteDialogOpen(true);
@@ -237,6 +240,7 @@ export default function Product() {
             size="sm"
             variant="text"
             color="gray"
+            className="!p-1.5"
             onClick={() => {
               setViewProductId(row.id);
               setViewOpen(true);

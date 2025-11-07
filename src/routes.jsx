@@ -12,6 +12,7 @@ import {
   TruckIcon,
   PuzzlePieceIcon,
   CubeIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import Home from "./pages/dashboard/Home";
 
@@ -86,16 +87,22 @@ export const routes = [
         element: <Orders />,
       },
       {
-        icon: <ReceiptPercentIcon {...icon} />,
-        name: "GST Setting",
-        path: "gst_setting",
-        element: <GSTSetting />,
-      },
-      {
+        icon: <Cog6ToothIcon {...icon} />,
+        name: "Master Settings",
+        subRoutes: [
+          {
+            icon: <ReceiptPercentIcon {...icon} />,
+            name: "GST Setting",
+            path: "gst_setting",
+            element: <GSTSetting />,
+          },
+     {
         icon: <TruckIcon {...icon} />,
-        name: "Courier Charge Setting",
+        name: "Courier Charge",
         path: "courier_setting",
         element: <CourierSetting />,
+      },
+        ],
       },
       {
         icon: <UsersIcon {...icon} />,
@@ -111,7 +118,7 @@ export const routes = [
       },
     ],
   },
-   {
+  {
     title: "auth pages",
     layout: "auth",
     pages: [
@@ -121,16 +128,16 @@ export const routes = [
         path: "/sign-in",
         element: <SignIn />,
       },
-       {
-      name: "forgot password",
-      path: "/forgot-password",
-      element: <ForgotPassword />,
-    },
-    {
-      name: "reset password",
-      path: "/reset-password/:uid/:token",
-      element: <ResetPassword />,
-    },
+      {
+        name: "forgot password",
+        path: "/forgot-password",
+        element: <ForgotPassword />,
+      },
+      {
+        name: "reset password",
+        path: "/reset-password/:uid/:token",
+        element: <ResetPassword />,
+      },
     ],
   },
 ];

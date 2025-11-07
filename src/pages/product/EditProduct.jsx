@@ -208,9 +208,46 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
     }
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!form.product_name.trim()) newErrors.product_name = "Product name is required.";
+    if (!form.category) newErrors.category = "Category is required.";
+    if (!form.price || parseFloat(form.price) <= 0)
+      newErrors.price = "Price must be greater than zero.";
+    if (!form.quantity_unit) newErrors.quantity_unit = "Quantity unit is required.";
+    if (!form.quantity)
+      newErrors.quantity = "Quantity is required.";
+    else if (parseFloat(form.quantity) < 0)
+      newErrors.quantity = "Quantity cannot be negative.";
+    if (!form.stock_quantity)
+      newErrors.stock_quantity = "Stock quantity is required.";
+    else if (parseInt(form.stock_quantity) < 0)
+      newErrors.stock_quantity = "Stock quantity cannot be negative.";
+
+    // Optional: validate image only if replaced
+    if (
+      form.product_image &&
+      !["image/jpeg", "image/png", "image/webp"].includes(form.product_image.type)
+    ) {
+      newErrors.product_image = "Only JPEG, PNG, or WEBP images are allowed.";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      toast.error(Object.values(newErrors)[0]); // show first error
+      return false;
+    }
+
+    return true;
+  };
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
     setIsSubmitting(true);
     try {
       const payload = new FormData();
@@ -232,9 +269,9 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
 
       toast.success(res.data?.message || "Product updated successfully!");
       setTimeout(() => {
-          handleOpenClose(false);
-          refresh?.();
-        }, 1000);
+        handleOpenClose(false);
+        refresh?.();
+      }, 1000);
     } catch (err) {
       console.error(err);
       toast.error("Error updating product");
@@ -328,30 +365,89 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
                 onChange={handleChange}
                 required
               />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
-                  label="Quantity"
-                  name="quantity"
-                  type="number"
-                  min="0"
-                  onInput={(e) => e.target.value = Math.max(0, e.target.value)}
-                  value={form.quantity}
-                  onChange={handleChange}
-                  required
-                />
+
+              <Select
+                label={
+                  <span>
+                    Quantity Unit <span className="text-red-500">*</span>
+                  </span>
+                }
+                value={form.quantity_unit}
+                onChange={(val) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    quantity_unit: val,
+                    quantity: val === "piece" ? "1" : "", // ✅ auto-set 1 for piece
+                  }));
+                }}
+                required
+                className="w-full"
+                containerProps={{ className: "w-full" }}
+              >
+                {["ml", "liter", "g", "kg", "piece", "pack"].map((unit) => (
+                  <Option key={unit} value={unit}>
+                    {unit.toUpperCase()}
+                  </Option>
+                ))}
+              </Select>
 
 
-                <Select
-                  label="Quantity Unit *"
-                  value={form.quantity_unit}
-                  onChange={(v) => setForm((p) => ({ ...p, quantity_unit: v }))}
-                >
-                  {["ml", "liter", "g", "kg", "piece", "pack"].map((u) => (
-                    <Option key={u} value={u}>{u.toUpperCase()}</Option>
-                  ))}
-                </Select>
+              <Input
+                label={`Quantity${form.quantity_unit
+                  ? ` (${form.quantity_unit.toUpperCase()})`
+                  : ""
+                  }`}
+                name="quantity"
+                type="number"
+                step={["liter", "kg"].includes(form.quantity_unit) ? "0.01" : "1"}
+                min="0"
+                value={form.quantity}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  let isValid = true;
 
-              </div>
+                  switch (form.quantity_unit) {
+                    case "ml":
+                      isValid =
+                        val === "" || (Number(val) >= 0 && Number(val) <= 999);
+                      break;
+                    case "liter":
+                      isValid =
+                        val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
+                      break;
+                    case "g":
+                      isValid =
+                        val === "" || (Number(val) >= 0 && Number(val) <= 999);
+                      break;
+                    case "kg":
+                      isValid =
+                        val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
+                      break;
+                    case "pack":
+                      isValid =
+                        val === "" || (Number(val) >= 0 && Number(val) <= 1000);
+                      break;
+                    default:
+                      isValid = true;
+                  }
+
+                  if (isValid) handleChange(e);
+                }}
+                onKeyDown={(e) => {
+                  if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+                }}
+                required
+                disabled={!form.quantity_unit} // disable until unit is selected
+                readOnly={form.quantity_unit === "piece"} // lock for piece
+                className={`w-full transition-all ${form.quantity_unit === "piece"
+                  ? "cursor-not-allowed bg-gray-50 text-gray-700"
+                  : ""
+                  }`}
+                crossOrigin=""
+
+              />
+
+
               <Input
                 label="Stock Quantity"
                 name="stock_quantity"
@@ -363,7 +459,7 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
                 required
               />
 
-              <div className="flex items-center justify-start  gap-3">
+              {/* <div className="flex items-center justify-start  gap-3">
                 <Switch
                   id="is_available"
                   name="is_available"
@@ -376,7 +472,7 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
                 >
                   Available
                 </label>
-              </div>
+              </div> */}
 
               <div className="md:col-span-2">
                 <Textarea

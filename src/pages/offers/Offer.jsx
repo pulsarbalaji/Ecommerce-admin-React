@@ -175,11 +175,12 @@ export default function Offer() {
     {
       name: "Actions",
       cell: (row) => (
-        <div className="flex flex-wrap gap-1 justify-center">
+       <div className="flex justify-center items-center gap-2">
           <IconButton
             size="sm"
             variant="text"
             color="blue"
+            className="!p-1.5"
             onClick={() => {
               setEditOfferId(row.id);
               setEditOpen(true);
@@ -192,6 +193,7 @@ export default function Offer() {
             size="sm"
             variant="text"
             color="red"
+            className="!p-1.5"
             onClick={() => {
               setSelectedOffer(row);
               setDeleteDialogOpen(true);
@@ -204,6 +206,7 @@ export default function Offer() {
             size="sm"
             variant="text"
             color="gray"
+            className="!p-1.5"
             onClick={() => {
               setViewOfferId(row.id);
               setViewOpen(true);

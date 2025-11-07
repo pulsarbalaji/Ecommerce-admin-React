@@ -64,12 +64,13 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
 
   return (
     <Dialog size="md" open={open} handler={handleOpenClose}>
-      <DialogHeader  className="flex justify-center">
-          <Typography variant="h5" className="font-semibold">
-            Update Order Status 🔄
-          </Typography>
-        </DialogHeader>
-      <DialogBody divider>
+      <DialogHeader className="flex justify-center">
+        <Typography variant="h5" className="font-semibold">
+          Update Order Status
+        </Typography>
+      </DialogHeader>
+      <DialogBody divider className="overflow-y-auto max-h-[80vh]">
+
         {loading ? (
           <div className="text-center py-6 flex justify-center items-center gap-2">
             <Spinner color="blue" className="h-6 w-6" />
@@ -97,20 +98,30 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
                 <strong>Total:</strong> ₹{order.total_amount}
               </div>
             </div>
+            <div className="w-full flex justify-center mt-4">
 
-            {/* Status Select */}
-            <Select
-              label="Order Status"
-              value={order.status}
-              onChange={(value) => setOrder({ ...order, status: value })}
-            >
-              {statusOptions.map((s) => (
-                <Option key={s.value} value={s.value}>
-                  {s.label}
-                </Option>
-              ))}
-            </Select>
-
+              <div className="w-64">
+                {/* Status Select */}
+                <Select
+                  label="Order Status"
+                  value={order.status}
+                  onChange={(value) => setOrder({ ...order, status: value })}
+                  menuProps={{
+                    className: "z-[9999] max-h-36 overflow-y-auto", // 👈 limit height & scroll
+                    placement: "bottom-start",
+                  }}
+                  containerProps={{
+                    className: "relative z-[9999]",
+                  }}
+                >
+                  {statusOptions.map((s) => (
+                    <Option key={s.value} value={s.value}>
+                      {s.label}
+                    </Option>
+                  ))}
+                </Select>
+              </div>
+            </div>
             {/* Buttons */}
             <div className="flex justify-center gap-4 mt-4">
               <Button

@@ -235,9 +235,9 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
 
       toast.success("Product added successfully!");
       setTimeout(() => {
-          handleOpenClose(false);
-          refresh?.();
-        }, 1000);
+        handleOpenClose(false);
+        refresh?.();
+      }, 1000);
       setForm({
         product_name: "",
         product_description: "",
@@ -355,27 +355,11 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
               required
             />
 
+
             {/* Stock Quantity */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                label="Quantity"
-                name="quantity"
-                type="number"
-                min="0"
-                max="1000"
-                value={form.quantity}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === "" || (Number(value) >= 0 && Number(value) <= 1000)) {
-                    handleChange(e);
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
-                }}
-                error={!!errors.quantity}
-                required
-              />
+            {/* Stock Quantity */}
+       
+              {/* --- Select Unit --- */}
               <Select
                 label={
                   <span>
@@ -384,9 +368,13 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
                 }
                 name="quantity_unit"
                 value={form.quantity_unit}
-                onChange={(val) =>
-                  setForm((prev) => ({ ...prev, quantity_unit: val }))
-                }
+                onChange={(val) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    quantity_unit: val,
+                    quantity: val === "piece" ? "1" : "", // ✅ fixed for 'piece'
+                  }));
+                }}
                 error={!!errors.quantity_unit}
                 required
               >
@@ -395,10 +383,58 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
                     {unit.toUpperCase()}
                   </Option>
                 ))}
-
               </Select>
 
-            </div>
+              {/* --- Quantity Input (No Placeholder) --- */}
+              <Input
+                label={`Quantity${form.quantity_unit ? ` (${form.quantity_unit.toUpperCase()})` : ""
+                  }`}
+                name="quantity"
+                type="number"
+                step={["liter", "kg"].includes(form.quantity_unit) ? "0.01" : "1"}
+                min="0"
+                value={form.quantity}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  let isValid = true;
+
+                  switch (form.quantity_unit) {
+                    case "ml":
+                      isValid = val === "" || (Number(val) >= 0 && Number(val) <= 999);
+                      break;
+                    case "liter":
+                      isValid = val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
+                      break;
+                    case "g":
+                      isValid = val === "" || (Number(val) >= 0 && Number(val) <= 999);
+                      break;
+                    case "kg":
+                      isValid = val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
+                      break;
+                    case "pack":
+                      isValid = val === "" || (Number(val) >= 0 && Number(val) <= 1000);
+                      break;
+                    default:
+                      isValid = true;
+                  }
+
+                  if (isValid) handleChange(e);
+                }}
+                onKeyDown={(e) => {
+                  if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+                }}
+                error={!!errors.quantity}
+                required
+                disabled={!form.quantity_unit} // ✅ disable until unit selected
+                readOnly={form.quantity_unit === "piece"} // ✅ fixed 1 for piece
+                crossOrigin="" // prevents react warning in Material Tailwind Input
+                className={`transition-all ${form.quantity_unit === "piece"
+                    ? "cursor-not-allowed bg-gray-50 text-gray-700"
+                    : ""
+                  }`}
+              />
+          
+
             <Input
               label="Stock Quantity"
               name="stock_quantity"

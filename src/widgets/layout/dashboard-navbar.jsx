@@ -29,6 +29,15 @@ export function DashboardNavbar() {
   const [layout, page] = pathname.split("/").filter((el) => el !== "");
 
   const [profileOpen, setProfileOpen] = useState(false);
+// helper function (place this above return or in a utils file)
+const formatText = (text) => {
+  if (!text) return "";
+  return text
+    .replace(/_/g, " ") // convert underscores to spaces
+    .split(" ") // split into words
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // capitalize each
+    .join(" "); // join back with space
+};
 
   const handleLogout = async () => {
     try {
@@ -55,32 +64,34 @@ export function DashboardNavbar() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-3 md:gap-6">
           {/* Left Section (Breadcrumbs + Title) */}
           <div className="w-full md:w-auto">
-            <Breadcrumbs className="bg-transparent p-0 text-sm">
-              <Link to={`/${layout}`}>
-                <Typography
-                  variant="small"
-                  color="blue-gray"
-                  className="font-normal opacity-50 hover:text-blue-500 hover:opacity-100 transition-all"
-                >
-                  {layout}
-                </Typography>
-              </Link>
-              <Typography
-                variant="small"
-                color="blue-gray"
-                className="font-normal truncate"
-              >
-                {page}
-              </Typography>
-            </Breadcrumbs>
+<Breadcrumbs className="bg-transparent p-0 text-sm">
+  <Link to={`/${layout}`}>
+    <Typography
+      variant="small"
+      color="blue-gray"
+      className="font-normal opacity-50 hover:text-blue-500 hover:opacity-100 transition-all"
+    >
+      {formatText(layout)}
+    </Typography>
+  </Link>
+  <Typography
+    variant="small"
+    color="blue-gray"
+    className="font-normal truncate"
+  >
+    {formatText(page)}
+  </Typography>
+</Breadcrumbs>
 
-            <Typography
-              variant="h6"
-              color="blue-gray"
-              className="capitalize truncate mt-1"
-            >
-              {page}
-            </Typography>
+<Typography
+  variant="h6"
+  color="blue-gray"
+  className="truncate mt-1"
+>
+  {formatText(page)}
+</Typography>
+
+
           </div>
 
           {/* Right Section (Icons + Menu) */}
