@@ -14,12 +14,11 @@ import {
     Option,
 } from "@material-tailwind/react";
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useNavigate } from "react-router-dom";
 import api from "@/utils/base_url";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 
-// ✅ Styled File Input (same as AddProduct)
+/* ✅ Styled File Input (same as AddProduct) */
 function StyledFileInput({
     label,
     value,
@@ -62,12 +61,9 @@ function StyledFileInput({
                 {label}
                 {required && <span className="text-red-500 ml-0.5">*</span>}
             </label>
+
             <div
-                className={`border rounded-md px-3 py-2.5 flex items-center gap-2 bg-white cursor-pointer transition-all duration-200 ${focused
-                    ? "border-gray-800 shadow-sm"
-                    : error
-                        ? "border-red-500"
-                        : "border-gray-300"
+                className={`border rounded-md px-3 py-2.5 flex items-center gap-2 bg-white cursor-pointer transition-all duration-200 ${focused ? "border-gray-800 shadow-sm" : error ? "border-red-500" : "border-gray-300"
                     }`}
                 onClick={() => inputRef.current?.click()}
                 onFocus={() => setFocused(true)}
@@ -75,19 +71,18 @@ function StyledFileInput({
                 tabIndex={0}
             >
                 {!fileName && <PhotoIcon className="h-5 w-5 text-blue-gray-400" />}
+
                 {preview && (
-                    <img
-                        src={preview}
-                        alt="preview"
-                        className="h-7 w-7 object-cover rounded"
-                    />
+                    <img src={preview} alt="preview" className="h-7 w-7 object-cover rounded" />
                 )}
+
                 <span
                     className={`text-blue-gray-700 text-sm truncate flex-1 ${!fileName ? "text-blue-gray-400" : ""
                         }`}
                 >
                     {fileName || "Choose image..."}
                 </span>
+
                 {fileName && (
                     <button
                         type="button"
@@ -104,6 +99,7 @@ function StyledFileInput({
                     </button>
                 )}
             </div>
+
             <input
                 ref={inputRef}
                 type="file"
@@ -112,6 +108,7 @@ function StyledFileInput({
                 onChange={handleInputChange}
                 required={required}
             />
+
             {error && (
                 <Typography variant="small" color="red" className="mt-1">
                     {helperText}
@@ -121,11 +118,10 @@ function StyledFileInput({
     );
 }
 
-// ✅ Add Product Variant Component
+/* ✅ Add Product Variant Component */
 export default function AddProductVariant({ open, handleOpenClose, refresh }) {
     const { authData } = useAuth();
     const admin = authData?.admin;
-    const navigate = useNavigate();
 
     const [form, setForm] = useState({
         parent: "",
@@ -143,7 +139,7 @@ export default function AddProductVariant({ open, handleOpenClose, refresh }) {
     const [isCancelling, setIsCancelling] = useState(false);
     const [errors, setErrors] = useState({});
 
-    // ✅ Fetch main product dropdown
+    /* ✅ Fetch main products for dropdown */
     useEffect(() => {
         const fetchMainProducts = async () => {
             try {
@@ -156,21 +152,21 @@ export default function AddProductVariant({ open, handleOpenClose, refresh }) {
         fetchMainProducts();
     }, []);
 
-    // ✅ Validation
+    /* ✅ Validation */
     const validateForm = () => {
         const newErrors = {};
         if (!form.parent) newErrors.parent = "Main product is required.";
-        if (!form.product_name.trim())
-            newErrors.product_name = "Variant name is required.";
+        if (!form.product_name.trim()) newErrors.product_name = "Variant name is required.";
         if (!form.price || parseFloat(form.price) <= 0)
             newErrors.price = "Price must be greater than zero.";
-        if (!form.stock_quantity)
-            newErrors.stock_quantity = "Stock quantity is required.";
+        if (!form.stock_quantity) newErrors.stock_quantity = "Stock quantity is required.";
+
         if (!form.quantity) newErrors.quantity = "Quantity is required.";
-        if (!form.quantity_unit)
-            newErrors.quantity_unit = "Quantity unit is required.";
-        if (!form.product_image)
-            newErrors.product_image = "Variant image is required.";
+        else if (parseFloat(form.quantity) < 0)
+            newErrors.quantity = "Quantity cannot be negative.";
+
+        if (!form.quantity_unit) newErrors.quantity_unit = "Quantity unit is required.";
+        if (!form.product_image) newErrors.product_image = "Variant image is required.";
 
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0) {
@@ -180,7 +176,7 @@ export default function AddProductVariant({ open, handleOpenClose, refresh }) {
         return true;
     };
 
-    // ✅ Handle input change
+    /* ✅ Handle input changes */
     const handleChange = (e) => {
         const { name, value, files } = e.target;
         setForm((prev) => ({
@@ -190,10 +186,11 @@ export default function AddProductVariant({ open, handleOpenClose, refresh }) {
         if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
     };
 
-    // ✅ Submit
+    /* ✅ Submit handler */
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
+
         setIsSubmitting(true);
         try {
             const payload = new FormData();
@@ -262,19 +259,18 @@ export default function AddProductVariant({ open, handleOpenClose, refresh }) {
                         Add Product Variant
                     </Typography>
                 </DialogHeader>
+
                 <DialogBody>
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Main Product Dropdown */}
+                        {/* Parent Product */}
                         <div>
                             <Select
                                 label={
                                     <span>
-                                        Select Main Product<span className="text-red-500">*</span>
+                                        Select Main Product <span className="text-red-500">*</span>
                                     </span>
                                 }
-                                onChange={(val) =>
-                                    setForm((prev) => ({ ...prev, parent: val }))
-                                }
+                                onChange={(val) => setForm((prev) => ({ ...prev, parent: val }))}
                                 required
                             >
                                 {mainProducts.map((prod) => (
@@ -290,15 +286,16 @@ export default function AddProductVariant({ open, handleOpenClose, refresh }) {
                             )}
                         </div>
 
+                        {/* Variant Name */}
                         <Input
                             label="Variant Name"
                             name="product_name"
                             value={form.product_name}
-                            maxLength="50"
                             onChange={handleChange}
                             required
                         />
 
+                        {/* Image */}
                         <StyledFileInput
                             label="Variant Image"
                             value={form.product_image}
@@ -308,16 +305,97 @@ export default function AddProductVariant({ open, handleOpenClose, refresh }) {
                             helperText={errors.product_image}
                         />
 
+                        {/* Price */}
                         <Input
                             label="Price"
                             name="price"
                             type="number"
                             min="0"
-                            max="1000"
+                            max="10000"
                             value={form.price}
-                            onChange={handleChange}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === "" || (Number(value) >= 0 && Number(value) <= 10000)) {
+                                    handleChange(e);
+                                }
+                            }}
+                            onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
                             required
                         />
+
+                        {/* Quantity + Unit */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
+                            <Select
+                                label={
+                                    <span>
+                                        Select Unit <span className="text-red-500">*</span>
+                                    </span>
+                                }
+                                name="quantity_unit"
+                                value={form.quantity_unit}
+                                onChange={(val) =>
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        quantity_unit: val,
+                                        quantity: val === "piece" ? "1" : "",
+                                    }))
+                                }
+                                required
+                            >
+                                {["ml", "liter", "g", "kg", "piece", "pack"].map((unit) => (
+                                    <Option key={unit} value={unit}>
+                                        {unit.toUpperCase()}
+                                    </Option>
+                                ))}
+                            </Select>
+
+                            {/* Quantity */}
+                            <Input
+                                label={`Quantity${form.quantity_unit ? ` (${form.quantity_unit.toUpperCase()})` : ""}`}
+                                name="quantity"
+                                type="number"
+                                step={["liter", "kg"].includes(form.quantity_unit) ? "0.01" : "1"}
+                                min="0"
+                                value={form.quantity}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    let isValid = true;
+
+                                    switch (form.quantity_unit) {
+                                        case "ml":
+                                            isValid = val === "" || (Number(val) >= 0 && Number(val) <= 999);
+                                            break;
+                                        case "liter":
+                                            isValid = val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
+                                            break;
+                                        case "g":
+                                            isValid = val === "" || (Number(val) >= 0 && Number(val) <= 999);
+                                            break;
+                                        case "kg":
+                                            isValid = val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
+                                            break;
+                                        case "pack":
+                                            isValid = val === "" || (Number(val) >= 0 && Number(val) <= 1000);
+                                            break;
+                                        default:
+                                            isValid = true;
+                                    }
+
+                                    if (isValid) handleChange(e);
+                                }}
+                                onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
+                                required
+                                disabled={!form.quantity_unit}
+                                readOnly={form.quantity_unit === "piece"}
+                                className={`transition-all ${form.quantity_unit === "piece"
+                                    ? "cursor-not-allowed bg-gray-50 text-gray-700"
+                                    : ""
+                                    }`}
+                            />
+
+                            {/* Quantity Unit */}
+
+                        </div>
 
                         <Input
                             label="Stock Quantity"
@@ -330,35 +408,8 @@ export default function AddProductVariant({ open, handleOpenClose, refresh }) {
                             required
                         />
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Input
-                                label="Quantity"
-                                name="quantity"
-                                type="number"
-                                min="0"
-                                max="10000"
-                                value={form.quantity}
-                                onChange={handleChange}
-                                required
-                            />
-                            <Select
-                                label={
-                                    <span>
-                                        Select Unit <span className="text-red-500">*</span>
-                                    </span>
-                                }
-                                onChange={(val) =>
-                                    setForm((prev) => ({ ...prev, quantity_unit: val }))
-                                }
-                            >
-                                {["ml", "liter", "g", "kg", "piece", "pack"].map((u) => (
-                                    <Option key={u} value={u}>
-                                        {u.toUpperCase()}
-                                    </Option>
-                                ))}
-                            </Select>
-                        </div>
 
+                        {/* Description */}
                         <div className="md:col-span-2">
                             <Textarea
                                 label="Description"
@@ -368,12 +419,17 @@ export default function AddProductVariant({ open, handleOpenClose, refresh }) {
                                 rows={4}
                                 maxLength={3000}
                             />
-                            <Typography variant="small" color="gray" className="text-right mt-1 text-xs">
+                            <Typography
+                                variant="small"
+                                color="gray"
+                                className="text-right mt-1 text-xs"
+                            >
                                 {form.product_description.length}/3000
                             </Typography>
                         </div>
                     </form>
                 </DialogBody>
+
                 <DialogFooter className="flex justify-center gap-4">
                     <Button
                         variant="outlined"

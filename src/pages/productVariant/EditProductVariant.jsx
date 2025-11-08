@@ -66,13 +66,8 @@ function StyledFileInput({
       </label>
 
       <div
-        className={`border rounded-md px-3 py-2.5 flex items-center gap-2 bg-white cursor-pointer transition-all duration-200 ${
-          focused
-            ? "border-gray-800 shadow-sm"
-            : error
-            ? "border-red-500"
-            : "border-gray-300"
-        }`}
+        className={`border rounded-md px-3 py-2.5 flex items-center gap-2 bg-white cursor-pointer transition-all duration-200 ${focused ? "border-gray-800 shadow-sm" : error ? "border-red-500" : "border-gray-300"
+          }`}
         onClick={() => inputRef.current?.click()}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(true)}
@@ -81,17 +76,12 @@ function StyledFileInput({
         {!fileName && <PhotoIcon className="h-5 w-5 text-blue-gray-400" />}
 
         {preview && (
-          <img
-            src={preview}
-            alt="preview"
-            className="h-7 w-7 object-cover rounded"
-          />
+          <img src={preview} alt="preview" className="h-7 w-7 object-cover rounded" />
         )}
 
         <span
-          className={`text-blue-gray-700 text-sm truncate flex-1 ${
-            !fileName ? "text-blue-gray-400" : ""
-          }`}
+          className={`text-blue-gray-700 text-sm truncate flex-1 ${!fileName ? "text-blue-gray-400" : ""
+            }`}
         >
           {fileName || "Choose image..."}
         </span>
@@ -155,16 +145,15 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  /* ✅ Fetch data on open */
+  /* ✅ Fetch variant + main products */
   useEffect(() => {
     if (!open || !variantId) return;
-
     const fetchData = async () => {
       setIsLoading(true);
       try {
         const [variantRes, parentRes] = await Promise.all([
           api.get(`productvariant/${variantId}/`),
-          api.get("mainproductlist/"), // only id & name for dropdown
+          api.get("mainproductlist/"),
         ]);
 
         const variant = variantRes.data.data;
@@ -185,7 +174,6 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
         setExistingFileName(variant.product_image?.split("/").pop() || "");
         setProducts(parentRes.data.data || []);
       } catch (err) {
-        console.error(err);
         toast.error("Error loading variant details");
       } finally {
         setIsLoading(false);
@@ -195,6 +183,7 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
     fetchData();
   }, [variantId, open]);
 
+  /* ✅ Handle field changes */
   const handleChange = (e) => {
     const { name, value, files, type, checked } = e.target;
     if (name === "product_image") {
@@ -206,20 +195,17 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
     }
   };
 
+  /* ✅ Submit handler */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
       const payload = new FormData();
-     Object.entries(form).forEach(([k, v]) => {
-  if (v !== null) {
-
-    payload.append(k === "parent_product" ? "parent" : k, v);
-  }
-});
+      Object.entries(form).forEach(([k, v]) => {
+        if (v !== null) payload.append(k === "parent_product" ? "parent" : k, v);
+      });
       payload.append("updated_by", admin.user_id);
 
-      // 🩹 FIXED: removed double slash in URL
       await api.put(`productvariant/${variantId}/`, payload, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -230,7 +216,6 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
         refresh?.();
       }, 1000);
     } catch (err) {
-      console.error(err);
       toast.error("Failed to update variant");
     } finally {
       setIsSubmitting(false);
@@ -247,10 +232,7 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
 
   const imageUrl =
     existingImage &&
-    `${api.defaults.baseURL.replace(/\/api\/?$/, "")}/${existingImage.replace(
-      /^\//,
-      ""
-    )}`;
+    `${api.defaults.baseURL.replace(/\/api\/?$/, "")}/${existingImage.replace(/^\//, "")}`;
 
   return (
     <Dialog open={open} handler={handleCancel} size="lg">
@@ -308,25 +290,21 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
                 min="0"
                 value={form.price}
                 onChange={handleChange}
+                onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
                 required
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
-                  label="Quantity"
-                  name="quantity"
-                  type="number"
-                  min="0"
-                  value={form.quantity}
-                  onChange={handleChange}
-                  required
-                />
-
+              {/* Quantity & Unit (same logic as EditProduct) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
                 <Select
                   label="Quantity Unit *"
                   value={form.quantity_unit}
                   onChange={(v) =>
-                    setForm((prev) => ({ ...prev, quantity_unit: v }))
+                    setForm((prev) => ({
+                      ...prev,
+                      quantity_unit: v,
+                      quantity: v === "piece" ? "1" : "",
+                    }))
                   }
                 >
                   {["ml", "liter", "g", "kg", "piece", "pack"].map((u) => (
@@ -335,6 +313,47 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
                     </Option>
                   ))}
                 </Select>
+                
+                <Input
+                  label={`Quantity${form.quantity_unit ? ` (${form.quantity_unit.toUpperCase()})` : ""}`}
+                  name="quantity"
+                  type="number"
+                  step={["liter", "kg"].includes(form.quantity_unit) ? "0.01" : "1"}
+                  min="0"
+                  value={form.quantity}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    let isValid = true;
+                    switch (form.quantity_unit) {
+                      case "ml":
+                        isValid = val === "" || (Number(val) >= 0 && Number(val) <= 999);
+                        break;
+                      case "liter":
+                        isValid = val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
+                        break;
+                      case "g":
+                        isValid = val === "" || (Number(val) >= 0 && Number(val) <= 999);
+                        break;
+                      case "kg":
+                        isValid = val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
+                        break;
+                      case "pack":
+                        isValid = val === "" || (Number(val) >= 0 && Number(val) <= 1000);
+                        break;
+                      default:
+                        isValid = true;
+                    }
+                    if (isValid) handleChange(e);
+                  }}
+                  onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
+                  required
+                  disabled={!form.quantity_unit}
+                  readOnly={form.quantity_unit === "piece"}
+                  className={`transition-all ${form.quantity_unit === "piece"
+                      ? "cursor-not-allowed bg-gray-50 text-gray-700"
+                      : ""
+                    }`}
+                />
               </div>
 
               <Input
@@ -347,20 +366,6 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
                 required
               />
 
-              <div className="flex items-center justify-start gap-3">
-                <Switch
-                  id="is_available"
-                  name="is_available"
-                  checked={form.is_available}
-                  onChange={handleChange}
-                />
-                <label
-                  htmlFor="is_available"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Available
-                </label>
-              </div>
 
               <div className="md:col-span-2">
                 <Textarea
@@ -371,11 +376,7 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
                   rows={4}
                   maxLength={3000}
                 />
-                <Typography
-                  variant="small"
-                  color="gray"
-                  className="text-right mt-1 text-xs"
-                >
+                <Typography variant="small" color="gray" className="text-right mt-1 text-xs">
                   {form.product_description.length}/3000
                 </Typography>
               </div>
@@ -411,11 +412,7 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
             disabled={isSubmitting || isLoading}
             className="flex items-center justify-center gap-2"
           >
-            {isSubmitting ? (
-              <Spinner size="sm" color="white" />
-            ) : (
-              "Update Variant"
-            )}
+            {isSubmitting ? <Spinner size="sm" color="white" /> : "Update Variant"}
           </Button>
         </DialogFooter>
       </Card>

@@ -66,8 +66,7 @@ export default function ViewProduct({ open, handleOpenClose, productId }) {
       stars.push(
         <StarIcon
           key={i}
-          className={`h-5 w-5 ${i <= rating ? "text-yellow-500" : "text-gray-300"
-            }`}
+          className={`h-5 w-5 ${i <= rating ? "text-yellow-500" : "text-gray-300"}`}
         />
       );
     }
@@ -83,7 +82,7 @@ export default function ViewProduct({ open, handleOpenClose, productId }) {
           </Typography>
         </DialogHeader>
 
-        <DialogBody className="overflow-y-auto max-h-[60vh] pr-2">
+        <DialogBody className="overflow-y-auto max-h-[60vh] pr-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
           {loading ? (
             <div className="flex justify-center py-10">
               <Spinner size="lg" color="blue" />
@@ -91,8 +90,7 @@ export default function ViewProduct({ open, handleOpenClose, productId }) {
           ) : error ? (
             <div className="text-center text-red-500 py-4">{error}</div>
           ) : product ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <p><strong>Product Name:</strong> {product.product_name}</p>
               </div>
@@ -127,28 +125,30 @@ export default function ViewProduct({ open, handleOpenClose, productId }) {
                 </div>
               </div>
 
+              {/* 📝 Scrollable Description */}
               <div className="md:col-span-2">
-                <p>
-                  <strong>Description:</strong>{" "}
-                  <span className="whitespace-pre-line">
-                    {product.product_description || "—"}
-                  </span>
-                </p>
+                <p className="font-medium mb-2">Description:</p>
+                <div
+                  className="border border-gray-200 rounded-lg bg-gray-50 p-3 text-gray-800 text-sm leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300"
+                >
+                  {product.product_description || "No description available."}
+                </div>
               </div>
-
 
               <div>
                 <p><strong>Created By:</strong> {product.created_by_name || "—"}</p>
               </div>
 
               {imageUrl && (
-                <div className="md:col-span-2">
-                  <p><strong>Product Image:</strong></p>
-                  <img
-                    src={imageUrl}
-                    alt="Product"
-                    className="w-full max-w-xs h-auto object-cover rounded-md border border-gray-300 mt-2"
-                  />
+                <div className="md:col-span-2 flex flex-col items-center mt-4">
+                  <p className="mb-2 font-medium">Product Image:</p>
+                  <div className="w-72 h-48 border border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden">
+                    <img
+                      src={imageUrl}
+                      alt="Product"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -156,7 +156,7 @@ export default function ViewProduct({ open, handleOpenClose, productId }) {
         </DialogBody>
 
         <div className="flex justify-center mt-4">
-          <Button color="secondary" variant="outlined" onClick={goBack}>
+          <Button color="blue-gray" variant="outlined" onClick={goBack}>
             Back
           </Button>
         </div>

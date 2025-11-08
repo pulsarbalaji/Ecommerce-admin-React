@@ -12,16 +12,16 @@ import {
   Spinner,
 } from "@material-tailwind/react";
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useNavigate } from "react-router-dom";
 import api from "@/utils/base_url";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 
-/* 🔹 StyledFileInput (same style as AddCategory) */
+/* 🔹 StyledFileInput */
 function StyledFileInput({
   label,
   value,
   onChange,
+  onRemoveImage, // ✅ notify parent when image removed
   required,
   error,
   helperText,
@@ -63,12 +63,9 @@ function StyledFileInput({
       </label>
 
       <div
-        className={`border rounded-md px-3 py-2.5 flex items-center gap-2 bg-white cursor-pointer transition-all duration-200 ${focused
-          ? "border-gray-800 shadow-sm"
-          : error
-            ? "border-red-500"
-            : "border-gray-300"
-          }`}
+        className={`border rounded-md px-3 py-2.5 flex items-center gap-2 bg-white cursor-pointer transition-all duration-200 ${
+          focused ? "border-gray-800 shadow-sm" : error ? "border-red-500" : "border-gray-300"
+        }`}
         onClick={() => inputRef.current?.click()}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(true)}
@@ -81,8 +78,9 @@ function StyledFileInput({
         )}
 
         <span
-          className={`text-blue-gray-700 text-sm truncate flex-1 ${!fileName ? "text-blue-gray-400" : ""
-            }`}
+          className={`text-blue-gray-700 text-sm truncate flex-1 ${
+            !fileName ? "text-blue-gray-400" : ""
+          }`}
         >
           {fileName || "Choose image..."}
         </span>
@@ -97,6 +95,7 @@ function StyledFileInput({
               setPreview(null);
               if (inputRef.current) inputRef.current.value = "";
               onChange({ target: { name: "category_image", files: null } });
+              onRemoveImage?.(); // ✅ inform parent to clear old image
             }}
           >
             <XMarkIcon className="h-4 w-4 text-red-500" />
@@ -122,7 +121,7 @@ function StyledFileInput({
   );
 }
 
-/* 🔹 EditCategory component */
+/* 🔹 EditCategory Component */
 export default function EditCategory({ open, handleOpenClose, categoryId, refresh }) {
   const { authData } = useAuth();
   const admin = authData?.admin;
@@ -158,14 +157,17 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
   }, [categoryId, open]);
 
   const validateForm = () => {
-    if (!form.category_name) {
+    if (!form.category_name.trim()) {
       toast.error("Category name is required");
       return false;
     }
-    if (!form.category_image) {
+
+    // ✅ Allow existing image OR new upload
+    if (!form.category_image && !existingImage) {
       toast.error("Category image is required");
       return false;
     }
+
     if (
       form.category_image &&
       !["image/jpeg", "image/png", "image/webp"].includes(form.category_image.type)
@@ -179,6 +181,7 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
     }
     return true;
   };
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "description" && value.length > 3000) {
@@ -241,15 +244,17 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
     `${api.defaults.baseURL.replace(/\/api\/?$/, "")}/${existingImage.replace(/^\//, "")}`;
 
   return (
-    <Dialog open={open} handler={handleOpenClose} size="md">
-      <Card className="p-6 rounded-2xl shadow-lg">
-        <DialogHeader className="justify-center">
+    <Dialog open={open} handler={handleOpenClose} size="md" className="max-h-[85vh] overflow-hidden">
+      <Card className="rounded-2xl shadow-lg">
+        {/* Sticky Header */}
+        <DialogHeader className="justify-center sticky top-0 bg-white z-10 border-b pb-2">
           <Typography variant="h5" color="blue-gray" className="font-semibold">
             Edit Category ✏️
           </Typography>
         </DialogHeader>
 
-        <DialogBody>
+        {/* Scrollable Form Body */}
+        <DialogBody className=" px-6 py-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
           {isLoading ? (
             <div className="flex justify-center py-10">
               <Spinner size="lg" color="blue" />
@@ -271,7 +276,10 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
                   label="Category Image"
                   value={form.category_image}
                   onChange={handleChange}
-                  required
+                  onRemoveImage={() => {
+                    setExistingImage(null); // ✅ clear old image on X
+                    setExistingFileName("");
+                  }}
                   existingFileName={existingFileName}
                   error={
                     form.category_image &&
@@ -290,11 +298,7 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
                   rows={4}
                   maxLength={3000}
                 />
-                <Typography
-                  variant="small"
-                  color="gray"
-                  className="text-right mt-1 text-xs"
-                >
+                <Typography variant="small" color="gray" className="text-right mt-1 text-xs">
                   {form.description.length}/3000
                 </Typography>
               </div>
@@ -311,12 +315,12 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
                   </div>
                 </div>
               )}
-
             </form>
           )}
         </DialogBody>
 
-        <DialogFooter className="flex justify-center gap-4">
+        {/* Sticky Footer */}
+        <DialogFooter className="justify-center sticky bottom-0 bg-white border-t py-3">
           <Button
             variant="outlined"
             color="blue-gray"
@@ -330,7 +334,7 @@ export default function EditCategory({ open, handleOpenClose, categoryId, refres
             onClick={handleSubmit}
             color="gray"
             disabled={isSubmitting || isLoading}
-            className="flex items-center justify-center gap-2"
+            className="ml-3 flex items-center justify-center gap-2"
           >
             {isSubmitting ? <Spinner size="sm" color="white" /> : "Update Category"}
           </Button>
