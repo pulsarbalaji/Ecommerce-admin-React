@@ -19,7 +19,39 @@ import api from "@/utils/base_url";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 
-// Styled file input (matches your AddCategory component style)
+
+export const handleNumericInput = ({
+  e,
+  fieldName,
+  handleChange,
+  min = 1,
+  max = 100,
+  allowDecimal = false,
+  preventZero = true,
+}) => {
+  let value = e.target.value;
+
+  // 🧹 Remove leading zeros (e.g. 00010 -> 10)
+  if (value.length > 1 && value.startsWith("0")) {
+    value = value.replace(/^0+/, "");
+  }
+
+  // ❌ Prevent 0 if not allowed
+  if (preventZero && value === "0") return;
+
+  // ✅ Parse number safely
+  const num = Number(value);
+
+  // ❌ Ignore if out of range or invalid number
+  if (value !== "" && (isNaN(num) || num < min || num > max)) return;
+
+  // ❌ Disallow decimals if not allowed
+  if (!allowDecimal && value.includes(".")) return;
+
+  // ✅ Update parent form
+  handleChange({ target: { name: fieldName, value } });
+};
+
 function StyledFileInput({
   label,
   value,
@@ -52,6 +84,8 @@ function StyledFileInput({
   };
 
   const floated = focused || fileName;
+
+
 
   return (
     <div className="relative w-full">
@@ -338,16 +372,20 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
               label="Price"
               name="price"
               type="number"
-              min="0"
+              min="1"
               max="10000"
               value={form.price}
-              onChange={(e) => {
-                const value = e.target.value;
-                // prevent numbers > 40
-                if (value === "" || (Number(value) >= 0 && Number(value) <= 10000)) {
-                  handleChange(e);
-                }
-              }}
+              onChange={(e) =>
+                handleNumericInput({
+                  e,
+                  fieldName: "price",
+                  handleChange,
+                  min: 1,
+                  max: 10000,
+                  allowDecimal: false,
+                  preventZero: true,
+                })
+              }
               onKeyDown={(e) => {
                 if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
               }}
@@ -355,85 +393,86 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
               required
             />
 
+            {/* --- Select Unit --- */}
+            <Select
+              label={
+                <span>
+                  Select Unit<span className="text-red-500">*</span>
+                </span>
+              }
+              name="quantity_unit"
+              value={form.quantity_unit}
+              onChange={(val) => {
+                setForm((prev) => ({
+                  ...prev,
+                  quantity_unit: val,
+                  quantity: val === "piece" ? "1" : "", // ✅ fixed for 'piece'
+                }));
+              }}
+              error={!!errors.quantity_unit}
+              required
+            >
+              {["ml", "liter", "g", "kg", "piece", "pack"].map((unit) => (
+                <Option key={unit} value={unit}>
+                  {unit.toUpperCase()}
+                </Option>
+              ))}
+            </Select>
 
-            {/* Stock Quantity */}
-            {/* Stock Quantity */}
-       
-              {/* --- Select Unit --- */}
-              <Select
-                label={
-                  <span>
-                    Select Unit<span className="text-red-500">*</span>
-                  </span>
+            {/* --- Quantity Input (No Placeholder) --- */}
+            <Input
+              label={`Quantity${form.quantity_unit ? ` (${form.quantity_unit.toUpperCase()})` : ""
+                }`}
+              name="quantity"
+              type="number"
+              step={["liter", "kg"].includes(form.quantity_unit) ? "0.01" : "1"}
+              min="0"
+              value={form.quantity}
+              onChange={(e) => {
+                let limits = { min: 1, max: 1000, allowDecimal: false };
+
+                switch (form.quantity_unit) {
+                  case "ml":
+                    limits = { min: 1, max: 999, allowDecimal: false };
+                    break;
+                  case "liter":
+                    limits = { min: 1, max: 99.99, allowDecimal: true };
+                    break;
+                  case "g":
+                    limits = { min: 1, max: 999, allowDecimal: false };
+                    break;
+                  case "kg":
+                    limits = { min: 1, max: 99.99, allowDecimal: true };
+                    break;
+                  case "pack":
+                    limits = { min: 1, max: 1000, allowDecimal: false };
+                    break;
+                  default:
+                    limits = { min: 1, max: 1000 };
                 }
-                name="quantity_unit"
-                value={form.quantity_unit}
-                onChange={(val) => {
-                  setForm((prev) => ({
-                    ...prev,
-                    quantity_unit: val,
-                    quantity: val === "piece" ? "1" : "", // ✅ fixed for 'piece'
-                  }));
-                }}
-                error={!!errors.quantity_unit}
-                required
-              >
-                {["ml", "liter", "g", "kg", "piece", "pack"].map((unit) => (
-                  <Option key={unit} value={unit}>
-                    {unit.toUpperCase()}
-                  </Option>
-                ))}
-              </Select>
 
-              {/* --- Quantity Input (No Placeholder) --- */}
-              <Input
-                label={`Quantity${form.quantity_unit ? ` (${form.quantity_unit.toUpperCase()})` : ""
-                  }`}
-                name="quantity"
-                type="number"
-                step={["liter", "kg"].includes(form.quantity_unit) ? "0.01" : "1"}
-                min="0"
-                value={form.quantity}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  let isValid = true;
+                handleNumericInput({
+                  e,
+                  fieldName: "quantity",
+                  handleChange,
+                  ...limits,
+                  preventZero: true,
+                });
+              }}
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+              }}
+              error={!!errors.quantity}
+              required
+              disabled={!form.quantity_unit} // ✅ disable until unit selected
+              readOnly={form.quantity_unit === "piece"} // ✅ fixed 1 for piece
+              crossOrigin="" // prevents react warning in Material Tailwind Input
+              className={`transition-all ${form.quantity_unit === "piece"
+                ? "cursor-not-allowed bg-gray-50 text-gray-700"
+                : ""
+                }`}
+            />
 
-                  switch (form.quantity_unit) {
-                    case "ml":
-                      isValid = val === "" || (Number(val) >= 0 && Number(val) <= 999);
-                      break;
-                    case "liter":
-                      isValid = val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
-                      break;
-                    case "g":
-                      isValid = val === "" || (Number(val) >= 0 && Number(val) <= 999);
-                      break;
-                    case "kg":
-                      isValid = val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
-                      break;
-                    case "pack":
-                      isValid = val === "" || (Number(val) >= 0 && Number(val) <= 1000);
-                      break;
-                    default:
-                      isValid = true;
-                  }
-
-                  if (isValid) handleChange(e);
-                }}
-                onKeyDown={(e) => {
-                  if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
-                }}
-                error={!!errors.quantity}
-                required
-                disabled={!form.quantity_unit} // ✅ disable until unit selected
-                readOnly={form.quantity_unit === "piece"} // ✅ fixed 1 for piece
-                crossOrigin="" // prevents react warning in Material Tailwind Input
-                className={`transition-all ${form.quantity_unit === "piece"
-                    ? "cursor-not-allowed bg-gray-50 text-gray-700"
-                    : ""
-                  }`}
-              />
-          
 
             <Input
               label="Stock Quantity"
@@ -442,12 +481,17 @@ export default function AddProduct({ open, handleOpenClose, refresh }) {
               min="0"
               max="100"
               value={form.stock_quantity}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === "" || (Number(value) >= 0 && Number(value) <= 100)) {
-                  handleChange(e);
-                }
-              }}
+              onChange={(e) =>
+                handleNumericInput({
+                  e,
+                  fieldName: "stock_quantity",
+                  handleChange,
+                  min: 1,
+                  max: 100,
+                  allowDecimal: false,
+                  preventZero: true,
+                })
+              }
               onKeyDown={(e) => {
                 if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
               }}

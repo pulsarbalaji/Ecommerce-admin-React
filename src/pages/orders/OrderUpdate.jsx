@@ -8,6 +8,7 @@ import {
   Option,
   Spinner,
   Typography,
+  Input,
 } from "@material-tailwind/react";
 import api from "@/utils/base_url";
 import toast from "react-hot-toast";
@@ -19,6 +20,7 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
+  const [courierNumber, setCourierNumber] = useState("");
 
   const statusOptions = [
     { value: "pending", label: "Pending" },
@@ -33,7 +35,16 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
     setLoading(true);
     try {
       const res = await api.get(`orderdetails/${id}/`);
-      setOrder(res.data.data);
+      const data = res.data.data;
+
+      setOrder(data);
+
+      // ⭐ If courier number exists, fill input field automatically
+      if (data.courier_number) {
+        setCourierNumber(data.courier_number);
+      } else {
+        setCourierNumber("");
+      }
     } catch (err) {
       console.error("Error fetching order:", err);
       setError("Failed to load order.");
@@ -44,15 +55,30 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
 
   const updateStatus = async () => {
     if (!order) return;
+
+    // --- Validation for courier number if shipped ---
+    if (order.status === "shipped" && !courierNumber.trim()) {
+      toast.error("Courier number is required when status is Shipped");
+      return;
+    }
+
     setUpdating(true);
     try {
-      await api.put(`order-status/${id}/`, { order_status: order.status });
+      const payload = { order_status: order.status };
+      if (order.status === "shipped") {
+        payload.courier_number = courierNumber;
+      }
+
+      await api.put(`order-status/${id}/`, payload);
+
       toast.success("Order status updated successfully");
-      if (refresh) refresh(); // refresh orders list
+      if (refresh) refresh();
       handleOpenClose(false);
     } catch (err) {
       console.error("Failed to update status:", err);
-      toast.error("Failed to update status");
+      toast.error(
+        err.response?.data?.message || "Failed to update status"
+      );
     } finally {
       setUpdating(false);
     }
@@ -69,19 +95,18 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
           Update Order Status
         </Typography>
       </DialogHeader>
-      <DialogBody divider className="overflow-y-auto max-h-[80vh]">
 
+      <DialogBody divider className="overflow-y-auto max-h-[80vh]">
         {loading ? (
           <div className="text-center py-6 flex justify-center items-center gap-2">
-            <Spinner color="blue" className="h-6 w-6" />
-            Loading...
+            <Spinner color="blue" className="h-6 w-6" /> Loading...
           </div>
         ) : error ? (
           <div className="text-center py-6 text-red-600">{error}</div>
         ) : order ? (
           <div className="space-y-4">
             {/* Order Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <strong>Order Number:</strong> {order.order_number}
               </div>
@@ -98,16 +123,19 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
                 <strong>Total:</strong> ₹{order.total_amount}
               </div>
             </div>
-            <div className="w-full flex justify-center mt-4">
 
+            {/* Status Select */}
+            <div className="w-full flex justify-center mt-4">
               <div className="w-64">
-                {/* Status Select */}
                 <Select
                   label="Order Status"
                   value={order.status}
-                  onChange={(value) => setOrder({ ...order, status: value })}
+                  onChange={(value) => {
+                    setOrder({ ...order, status: value });
+                    if (value !== "shipped") setCourierNumber("");
+                  }}
                   menuProps={{
-                    className: "z-[9999] max-h-36 overflow-y-auto", // 👈 limit height & scroll
+                    className: "z-[9999] max-h-36 overflow-y-auto",
                     placement: "bottom-start",
                   }}
                   containerProps={{
@@ -122,11 +150,27 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
                 </Select>
               </div>
             </div>
+
+            {/* Courier Number Field — show only when shipped */}
+            {order.status === "shipped" && (
+              <div className="flex justify-center mt-4">
+                <div className="w-64">
+                  <Input
+                    label="Courier Number"
+                    value={courierNumber}
+                    onChange={(e) => setCourierNumber(e.target.value)}
+                    required
+                    maxLength="20"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Buttons */}
-            <div className="flex justify-center gap-4 mt-4">
+            <div className="flex justify-center gap-4 mt-6">
               <Button
                 variant="outlined"
-                color="secondary"
+                color="red"
                 onClick={() => handleOpenClose(false)}
               >
                 Cancel

@@ -12,14 +12,46 @@ import {
   Spinner,
   Select,
   Option,
-  Switch,
 } from "@material-tailwind/react";
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import api from "@/utils/base_url";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 
-/* 🔹 Styled File Input Component */
+/* ✅ Numeric Input Handler (shared across all screens) */
+export const handleNumericInput = ({
+  e,
+  fieldName,
+  handleChange,
+  min = 1,
+  max = 100,
+  allowDecimal = false,
+  preventZero = true,
+}) => {
+  let value = e.target.value;
+
+  // 🧹 Remove leading zeros (e.g. 00010 -> 10)
+  if (value.length > 1 && value.startsWith("0")) {
+    value = value.replace(/^0+/, "");
+  }
+
+  // ❌ Prevent 0 if not allowed
+  if (preventZero && value === "0") return;
+
+  // ✅ Parse safely
+  const num = Number(value);
+
+  // ❌ Out of range or invalid
+  if (value !== "" && (isNaN(num) || num < min || num > max)) return;
+
+  // ❌ Disallow decimals if not allowed
+  if (!allowDecimal && value.includes(".")) return;
+
+  // ✅ Update parent
+  handleChange({ target: { name: fieldName, value } });
+};
+
+/* ✅ Styled File Input with Preview */
 function StyledFileInput({
   label,
   name,
@@ -58,34 +90,38 @@ function StyledFileInput({
   return (
     <div className="relative w-full">
       <label
-        className={`absolute left-3 px-1 transition-all duration-200 bg-white text-gray-600 z-10
-        ${floated ? "-top-2.5 text-xs" : "top-2.5 text-sm"}`}
+        className={`absolute left-3 px-1 transition-all duration-200 bg-white text-gray-600 z-10 ${
+          floated ? "-top-2.5 text-xs" : "top-2.5 text-sm"
+        }`}
       >
         {label}
         {required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
 
       <div
-        className={`border rounded-md px-3 py-2.5 flex items-center gap-2 bg-white cursor-pointer transition-all duration-200 ${focused ? "border-gray-800 shadow-sm" : error ? "border-red-500" : "border-gray-300"
-          }`}
+        className={`border rounded-md px-3 py-2.5 flex items-center gap-2 bg-white cursor-pointer transition-all duration-200 ${
+          focused
+            ? "border-gray-800 shadow-sm"
+            : error
+            ? "border-red-500"
+            : "border-gray-300"
+        }`}
         onClick={() => inputRef.current?.click()}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(true)}
         tabIndex={0}
       >
         {!fileName && <PhotoIcon className="h-5 w-5 text-blue-gray-400" />}
-
         {preview && (
           <img src={preview} alt="preview" className="h-7 w-7 object-cover rounded" />
         )}
-
         <span
-          className={`text-blue-gray-700 text-sm truncate flex-1 ${!fileName ? "text-blue-gray-400" : ""
-            }`}
+          className={`text-blue-gray-700 text-sm truncate flex-1 ${
+            !fileName ? "text-blue-gray-400" : ""
+          }`}
         >
           {fileName || "Choose image..."}
         </span>
-
         {fileName && (
           <button
             type="button"
@@ -121,7 +157,7 @@ function StyledFileInput({
   );
 }
 
-/* 🔹 Edit Variant Component */
+/* ✅ Edit Variant Component */
 export default function EditVariant({ open, handleOpenClose, variantId, refresh }) {
   const { authData } = useAuth();
   const admin = authData?.admin;
@@ -139,15 +175,19 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
   });
 
   const [products, setProducts] = useState([]);
+  const [errors, setErrors] = useState({});
   const [existingImage, setExistingImage] = useState(null);
   const [existingFileName, setExistingFileName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  /* ✅ Fetch variant + main products */
+  
+
+  /* ✅ Fetch variant + parent list */
   useEffect(() => {
     if (!open || !variantId) return;
+
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -155,13 +195,12 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
           api.get(`productvariant/${variantId}/`),
           api.get("mainproductlist/"),
         ]);
-
         const variant = variantRes.data.data;
 
         setForm({
           product_name: variant.product_name || "",
           product_description: variant.product_description || "",
-          parent_product: String(variant.parent),
+          parent_product: String(variant.parent || ""),
           price: variant.price || "",
           quantity: variant.quantity || "",
           quantity_unit: variant.quantity_unit || "",
@@ -173,38 +212,86 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
         setExistingImage(variant.product_image || null);
         setExistingFileName(variant.product_image?.split("/").pop() || "");
         setProducts(parentRes.data.data || []);
-      } catch (err) {
+      } catch {
         toast.error("Error loading variant details");
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchData();
   }, [variantId, open]);
 
-  /* ✅ Handle field changes */
+  /* ✅ Handle changes */
   const handleChange = (e) => {
     const { name, value, files, type, checked } = e.target;
-    if (name === "product_image") {
-      setForm((prev) => ({ ...prev, product_image: files?.[0] || null }));
-    } else if (type === "checkbox") {
-      setForm((prev) => ({ ...prev, [name]: checked }));
-    } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
-    }
+    setForm((prev) => ({
+      ...prev,
+      [name]:
+        name === "product_image"
+          ? files?.[0] || null
+          : type === "checkbox"
+          ? checked
+          : value,
+    }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  /* ✅ Submit handler */
+  /* ✅ Validate before submit */
+  const validateForm = () => {
+    const newErrors = {};
+    if (!form.parent_product) newErrors.parent_product = "Parent product is required.";
+    if (!form.product_name.trim())
+      newErrors.product_name = "Variant name is required.";
+    if (!form.price) newErrors.price = "Price is required.";
+    else if (parseFloat(form.price) <= 0)
+      newErrors.price = "Price must be greater than zero.";
+
+    if (!form.stock_quantity)
+      newErrors.stock_quantity = "Stock quantity is required.";
+    else if (parseInt(form.stock_quantity) < 0)
+      newErrors.stock_quantity = "Stock quantity cannot be negative.";
+
+    if (!form.quantity) newErrors.quantity = "Quantity is required.";
+    else if (parseFloat(form.quantity) < 0)
+      newErrors.quantity = "Quantity cannot be negative.";
+
+    if (!form.quantity_unit)
+      newErrors.quantity_unit = "Quantity unit is required.";
+
+    if (
+      form.product_image &&
+      !["image/jpeg", "image/png", "image/webp"].includes(form.product_image.type)
+    )
+      newErrors.product_image = "Only JPEG, PNG, or WEBP images are allowed.";
+    else if (form.product_image && form.product_image.size > 2 * 1024 * 1024)
+      newErrors.product_image = "Image must be less than 2MB.";
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      toast.error(Object.values(newErrors)[0]);
+      return false;
+    }
+    return true;
+  };
+
+  /* ✅ Submit */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
     setIsSubmitting(true);
     try {
       const payload = new FormData();
-      Object.entries(form).forEach(([k, v]) => {
-        if (v !== null) payload.append(k === "parent_product" ? "parent" : k, v);
-      });
+      payload.append("parent", form.parent_product);
+      payload.append("product_name", form.product_name);
+      payload.append("product_description", form.product_description);
+      payload.append("price", form.price);
+      payload.append("quantity", form.quantity);
+      payload.append("quantity_unit", form.quantity_unit);
+      payload.append("stock_quantity", form.stock_quantity);
+      payload.append("is_available", form.is_available);
       payload.append("updated_by", admin.user_id);
+      if (form.product_image)
+        payload.append("product_image", form.product_image);
 
       await api.put(`productvariant/${variantId}/`, payload, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -216,7 +303,11 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
         refresh?.();
       }, 1000);
     } catch (err) {
-      toast.error("Failed to update variant");
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.detail ||
+        "Failed to update variant.";
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -249,20 +340,24 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
               <Spinner size="lg" color="blue" />
             </div>
           ) : (
-            <form
-              onSubmit={handleSubmit}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
-            >
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Variant Name */}
               <Input
                 label="Variant Name"
                 name="product_name"
                 value={form.product_name}
                 onChange={handleChange}
+                error={!!errors.product_name}
                 required
               />
 
+              {/* Parent Product */}
               <Select
-                label="Parent Product *"
+                label={
+                  <span>
+                    Parent Product <span className="text-red-500">*</span>
+                  </span>
+                }
                 value={String(form.parent_product)}
                 onChange={(val) =>
                   setForm((prev) => ({ ...prev, parent_product: val }))
@@ -275,26 +370,44 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
                 ))}
               </Select>
 
+              {/* Image */}
               <StyledFileInput
                 label="Variant Image"
                 name="product_image"
                 value={form.product_image}
                 onChange={handleChange}
                 existingFileName={existingFileName}
+                error={!!errors.product_image}
+                helperText={errors.product_image}
               />
 
+              {/* Price */}
               <Input
                 label="Price"
                 name="price"
                 type="number"
-                min="0"
+                min="1"
+                max="10000"
                 value={form.price}
-                onChange={handleChange}
-                onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
+                onChange={(e) =>
+                  handleNumericInput({
+                    e,
+                    fieldName: "price",
+                    handleChange,
+                    min: 1,
+                    max: 10000,
+                    allowDecimal: false,
+                    preventZero: true,
+                  })
+                }
+                onKeyDown={(e) =>
+                  ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()
+                }
+                error={!!errors.price}
                 required
               />
 
-              {/* Quantity & Unit (same logic as EditProduct) */}
+              {/* Quantity and Unit */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:col-span-2">
                 <Select
                   label="Quantity Unit *"
@@ -313,60 +426,83 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
                     </Option>
                   ))}
                 </Select>
-                
+
                 <Input
-                  label={`Quantity${form.quantity_unit ? ` (${form.quantity_unit.toUpperCase()})` : ""}`}
+                  label={`Quantity${
+                    form.quantity_unit ? ` (${form.quantity_unit.toUpperCase()})` : ""
+                  }`}
                   name="quantity"
                   type="number"
                   step={["liter", "kg"].includes(form.quantity_unit) ? "0.01" : "1"}
-                  min="0"
+                  min="1"
                   value={form.quantity}
                   onChange={(e) => {
-                    const val = e.target.value;
-                    let isValid = true;
+                    let limits = { min: 1, max: 1000, allowDecimal: false };
                     switch (form.quantity_unit) {
                       case "ml":
-                        isValid = val === "" || (Number(val) >= 0 && Number(val) <= 999);
+                        limits = { min: 1, max: 999, allowDecimal: false };
                         break;
                       case "liter":
-                        isValid = val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
+                        limits = { min: 1, max: 99.99, allowDecimal: true };
                         break;
                       case "g":
-                        isValid = val === "" || (Number(val) >= 0 && Number(val) <= 999);
+                        limits = { min: 1, max: 999, allowDecimal: false };
                         break;
                       case "kg":
-                        isValid = val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
+                        limits = { min: 1, max: 99.99, allowDecimal: true };
                         break;
                       case "pack":
-                        isValid = val === "" || (Number(val) >= 0 && Number(val) <= 1000);
+                        limits = { min: 1, max: 1000, allowDecimal: false };
                         break;
-                      default:
-                        isValid = true;
                     }
-                    if (isValid) handleChange(e);
+
+                    handleNumericInput({
+                      e,
+                      fieldName: "quantity",
+                      handleChange,
+                      ...limits,
+                      preventZero: true,
+                    });
                   }}
-                  onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
+                  onKeyDown={(e) =>
+                    ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()
+                  }
+                  error={!!errors.quantity}
                   required
                   disabled={!form.quantity_unit}
                   readOnly={form.quantity_unit === "piece"}
-                  className={`transition-all ${form.quantity_unit === "piece"
+                  className={`transition-all ${
+                    form.quantity_unit === "piece"
                       ? "cursor-not-allowed bg-gray-50 text-gray-700"
                       : ""
-                    }`}
+                  }`}
                 />
               </div>
 
+              {/* Stock Quantity */}
               <Input
                 label="Stock Quantity"
                 name="stock_quantity"
                 type="number"
-                min="0"
+                min="1"
+                max="100"
                 value={form.stock_quantity}
-                onChange={handleChange}
+                onChange={(e) =>
+                  handleNumericInput({
+                    e,
+                    fieldName: "stock_quantity",
+                    handleChange,
+                    min: 1,
+                    max: 100,
+                    allowDecimal: false,
+                    preventZero: true,
+                  })
+                }
+                error={!!errors.stock_quantity}
                 required
               />
 
-
+              {/* Description */}
               <div className="md:col-span-2">
                 <Textarea
                   label="Description"
@@ -381,6 +517,7 @@ export default function EditVariant({ open, handleOpenClose, variantId, refresh 
                 </Typography>
               </div>
 
+              {/* Existing Image Preview */}
               {imageUrl && !form.product_image && (
                 <div className="md:col-span-2">
                   <p className="mb-2 font-medium">Current Image:</p>

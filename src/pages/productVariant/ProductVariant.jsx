@@ -132,13 +132,16 @@ export default function ProductVariant() {
         },
         {
             name: "Price",
-            selector: (row) => `₹${row.price}`,
+            selector: (row) => Number(row.price) || 0, // ✅ numeric sorting
             sortable: true,
+            right: true,
+            cell: (row) => <span className="font-semibold">₹{row.price}</span>,
         },
         {
             name: "Quantity",
-            selector: (row) => `${row.quantity} ${row.quantity_unit}`,
+            selector: (row) => Number(row.quantity) || 0, // ✅ numeric sorting
             sortable: true,
+            right: true,
             cell: (row) => (
                 <span className="font-medium">
                     {row.quantity} {row.quantity_unit}
@@ -147,12 +150,14 @@ export default function ProductVariant() {
         },
         {
             name: "Stock",
-            selector: (row) => row.stock_quantity,
+            selector: (row) => Number(row.stock_quantity) || 0, // ✅ numeric sorting
+            sortable: true,
+            right: true,
             cell: (row) => (
                 <span
                     className={`px-2 py-1 text-xs rounded-full ${row.stock_quantity > 0
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-700"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-700"
                         }`}
                 >
                     {row.stock_quantity > 0 ? row.stock_quantity : "Out of stock"}
@@ -227,11 +232,10 @@ export default function ProductVariant() {
                     <div className="w-52">
                         <Select
                             label="Filter by Main Product"
-                            value={selectedParent}
                             onChange={(val) => setSelectedParent(val)}
                         >
                             {mainProducts.map((p) => (
-                                <Option key={p.id} value={p.id}>
+                                <Option key={p.id} value={String(p.id)}>
                                     {p.product_name}
                                 </Option>
                             ))}
@@ -252,7 +256,7 @@ export default function ProductVariant() {
                         className="w-full sm:w-auto"
                         onClick={() => setAddOpen(true)}
                     >
-                        + Add Product
+                        + Add Variant
                     </Button>
                 </div>
             </div>

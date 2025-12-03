@@ -20,6 +20,39 @@ import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 
 /* 🔹 Styled File Input with Preview (same as Category) */
+
+export const handleNumericInput = ({
+  e,
+  fieldName,
+  handleChange,
+  min = 1,
+  max = 100,
+  allowDecimal = false,
+  preventZero = true,
+}) => {
+  let value = e.target.value;
+
+  // 🧹 Remove leading zeros (e.g. 00010 -> 10)
+  if (value.length > 1 && value.startsWith("0")) {
+    value = value.replace(/^0+/, "");
+  }
+
+  // ❌ Prevent 0 if not allowed
+  if (preventZero && value === "0") return;
+
+  // ✅ Parse number safely
+  const num = Number(value);
+
+  // ❌ Ignore if out of range or invalid number
+  if (value !== "" && (isNaN(num) || num < min || num > max)) return;
+
+  // ❌ Disallow decimals if not allowed
+  if (!allowDecimal && value.includes(".")) return;
+
+  // ✅ Update parent form
+  handleChange({ target: { name: fieldName, value } });
+};
+
 function StyledFileInput({
   label,
   name,
@@ -360,9 +393,21 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
                 label="Price"
                 name="price"
                 type="number"
-                min="0"
+                min="1"
                 value={form.price}
-                onChange={handleChange}
+                onChange={(e) =>
+                  handleNumericInput({
+                    e,
+                    fieldName: "price",
+                    handleChange,
+                    min: 1,
+                    max: 10000,
+                    allowDecimal: false,
+                    preventZero: true,
+                  })
+                }
+                error={!!errors.price}
+
                 required
               />
 
@@ -400,39 +445,40 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
                 name="quantity"
                 type="number"
                 step={["liter", "kg"].includes(form.quantity_unit) ? "0.01" : "1"}
-                min="0"
+                min="1"
                 value={form.quantity}
                 onChange={(e) => {
-                  const val = e.target.value;
-                  let isValid = true;
+                  let limits = { min: 1, max: 1000, allowDecimal: false };
 
                   switch (form.quantity_unit) {
                     case "ml":
-                      isValid =
-                        val === "" || (Number(val) >= 0 && Number(val) <= 999);
+                      limits = { min: 1, max: 999, allowDecimal: false };
                       break;
                     case "liter":
-                      isValid =
-                        val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
+                      limits = { min: 1, max: 99.99, allowDecimal: true };
                       break;
                     case "g":
-                      isValid =
-                        val === "" || (Number(val) >= 0 && Number(val) <= 999);
+                      limits = { min: 1, max: 999, allowDecimal: false };
                       break;
                     case "kg":
-                      isValid =
-                        val === "" || (Number(val) >= 0 && Number(val) <= 99.99);
+                      limits = { min: 1, max: 99.99, allowDecimal: true };
                       break;
                     case "pack":
-                      isValid =
-                        val === "" || (Number(val) >= 0 && Number(val) <= 1000);
+                      limits = { min: 1, max: 1000, allowDecimal: false };
                       break;
                     default:
-                      isValid = true;
+                      limits = { min: 1, max: 1000 };
                   }
 
-                  if (isValid) handleChange(e);
+                  handleNumericInput({
+                    e,
+                    fieldName: "quantity",
+                    handleChange,
+                    ...limits,
+                    preventZero: true,
+                  });
                 }}
+                error={!!errors.quantity}
                 onKeyDown={(e) => {
                   if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
                 }}
@@ -452,10 +498,21 @@ export default function EditProduct({ open, handleOpenClose, productId, refresh 
                 label="Stock Quantity"
                 name="stock_quantity"
                 type="number"
-                min="0"
+                min="1"
                 max="100"
                 value={form.stock_quantity}
-                onChange={handleChange}
+                onChange={(e) =>
+                                handleNumericInput({
+                                  e,
+                                  fieldName: "stock_quantity",
+                                  handleChange,
+                                  min: 1,
+                                  max: 100,
+                                  allowDecimal: false,
+                                  preventZero: true,
+                                })
+                              }
+                error={!!errors.stock_quantity}
                 required
               />
 

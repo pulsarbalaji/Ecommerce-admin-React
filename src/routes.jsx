@@ -13,6 +13,8 @@ import {
   PuzzlePieceIcon,
   CubeIcon,
   Cog6ToothIcon,
+  EyeIcon,
+  PrinterIcon,
 } from "@heroicons/react/24/solid";
 import Home from "./pages/dashboard/Home";
 
@@ -29,6 +31,9 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import GSTSetting from "./pages/gst/GSTSetting";
 import CourierSetting from "./pages/courierCharge/CourierChargeSetting";
 import ProductVariant from "./pages/productVariant/productVariant";
+import SettingsPage from "./pages/Settings/SettingsPage";
+import Review from "./pages/reviewmodule/Review";
+import PrintAddress from "./pages/PrintAddress/Printaddress";
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -87,22 +92,10 @@ export const routes = [
         element: <Orders />,
       },
       {
-        icon: <Cog6ToothIcon {...icon} />,
-        name: "Master Settings",
-        subRoutes: [
-          {
-            icon: <ReceiptPercentIcon {...icon} />,
-            name: "GST Setting",
-            path: "gst_setting",
-            element: <GSTSetting />,
-          },
-     {
-        icon: <TruckIcon {...icon} />,
-        name: "Courier Charge",
-        path: "courier_setting",
-        element: <CourierSetting />,
-      },
-        ],
+        icon: <Cog6ToothIcon  {...icon} />,
+        name: "Master Data",
+        path: "master_data",
+        element: <SettingsPage />,
       },
       {
         icon: <UsersIcon {...icon} />,
@@ -115,6 +108,18 @@ export const routes = [
         name: "Contact Us Details",
         path: "contact_us",
         element: <ContactUs />,
+      },
+      {
+        icon: <EyeIcon {...icon} />,
+        name: "Review Details",
+        path: "review",
+        element: <Review />,
+      },
+      {
+        icon: <PrinterIcon {...icon} />,
+        name: "Print Address",
+        path: "print_address",
+        element: <PrintAddress />,
       },
     ],
   },

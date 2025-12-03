@@ -36,42 +36,26 @@ export default function Product() {
   const [editOpen, setEditOpen] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
   const [viewProductId, setViewProductId] = useState(null);
-  const [page, setPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [totalProducts, setTotalCustomers] = useState(0);
   const backendBaseUrl = import.meta.env.VITE_API_URL;
 
-  // Fetch products
-  const fetchProducts = async (pageNumber = page, pageSize = itemsPerPage) => {
+  // ✅ Fetch all products (no pagination params)
+  const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await api.get("product/", {
-        params: { page: pageNumber, page_size: pageSize },
-      });
-      // Normalized to your backend: results.data.data or results.data
+      const response = await api.get("product/"); // 👈 no params now
       const data =
-        response.data?.results?.data?.data ||
-        response.data?.results?.data ||
         response.data?.data ||
+        response.data?.results?.data ||
+        response.data?.results ||
         [];
 
-      // ✅ Clean & set products safely
       const cleanData = (Array.isArray(data) ? data : []).filter(
         (item) => item && item.id
       );
+
       setProducts(cleanData);
       setFilteredProducts(cleanData);
-
-
-      // ✅ Extract total count properly
-      const total =
-        response.data?.results?.total ||
-        response.data?.total ||
-        response.data?.count ||
-        data.length;
-
-      setTotalCustomers(total); // must be a NUMBER
-
     } catch (err) {
       console.error("Error fetching products:", err);
       toast.error("Failed to load products");
@@ -82,9 +66,9 @@ export default function Product() {
 
   useEffect(() => {
     fetchProducts();
-  }, [page, itemsPerPage]);
+  }, []);
 
-  // Live client-side filtering (like AdminUser)
+  // ✅ Live search filtering (client-side)
   useEffect(() => {
     if (!search.trim()) {
       setFilteredProducts(products);
@@ -101,7 +85,7 @@ export default function Product() {
     );
   }, [search, products]);
 
-  // Actions
+  // ✅ Delete product
   const deleteProduct = async () => {
     if (!selectedProduct) return;
     const toastId = toast.loading("Deleting product...");
@@ -129,7 +113,7 @@ export default function Product() {
     }
   };
 
-  // Table columns—same layout logic as AdminUser, but with product fields
+  // ✅ Columns for table
   const columns = [
     {
       name: "Category Name",
@@ -161,31 +145,34 @@ export default function Product() {
     },
     {
       name: "Price",
-      selector: (row) => row.price,
+      selector: (row) => Number(row.price) || 0,
       sortable: true,
+      right: true,
       cell: (row) => <span className="font-semibold">₹{row.price}</span>,
     },
     {
       name: "Quantity",
-      selector: (row) => `${row.quantity} ${row.quantity_unit}`,
+      selector: (row) => Number(row.quantity) || 0,
       sortable: true,
+      right: true,
       cell: (row) => (
         <span className="font-medium">
           {row.quantity} {row.quantity_unit}
         </span>
       ),
     },
-
     {
       name: "Stock",
-      selector: (row) => row.stock_quantity,
+      selector: (row) => Number(row.stock_quantity) || 0,
       sortable: true,
+      right: true,
       cell: (row) => (
         <span
-          className={`px-2 py-1 text-xs rounded-full ${row.stock_quantity > 0
-            ? "bg-green-100 text-green-800"
-            : "bg-red-100 text-red-700"
-            }`}
+          className={`px-2 py-1 text-xs rounded-full ${
+            row.stock_quantity > 0
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-700"
+          }`}
         >
           {row.stock_quantity > 0 ? row.stock_quantity : "Out of stock"}
         </span>
@@ -193,25 +180,24 @@ export default function Product() {
     },
     {
       name: "Availability",
-      selector: (row) => row.is_available ? "Yes" : "No",
+      selector: (row) => (row.is_available ? "Yes" : "No"),
       sortable: true,
       cell: (row) => (
         <span
-          className={`px-2 py-1 text-xs rounded-full ${row.is_available
-            ? "bg-green-100 text-green-700"
-            : "bg-red-100 text-red-700"
-            }`}
+          className={`px-2 py-1 text-xs rounded-full ${
+            row.is_available
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
         >
-          {row.is_available ? "Available" : "Not Avaialable"}
+          {row.is_available ? "Available" : "Not Available"}
         </span>
       ),
     },
-
     {
       name: "Actions",
       cell: (row) => (
         <div className="flex justify-center items-center gap-2">
-
           <IconButton
             size="sm"
             variant="text"
@@ -279,6 +265,7 @@ export default function Product() {
           </Button>
         </div>
       </div>
+
       {/* DataTable */}
       <Card className="shadow-lg">
         {loading ? (
@@ -289,19 +276,11 @@ export default function Product() {
         ) : (
           <div className="overflow-x-auto">
             <DataTable
-              key={`${page}-${itemsPerPage}`}
               columns={columns}
-              data={filteredProducts}
-              pagination
-              paginationServer
-              paginationTotalRows={totalProducts}
-              paginationPerPage={itemsPerPage}  // ✅ required
-              paginationDefaultPage={page}
-              onChangePage={(p) => setPage(p)}
-              onChangeRowsPerPage={(size, p) => {
-                setItemsPerPage(size);
-                setPage(p);
-              }}
+              data={filteredProducts} // ✅ pass full data
+              pagination              // ✅ enable client-side pagination
+              paginationPerPage={itemsPerPage}
+              onChangeRowsPerPage={(size) => setItemsPerPage(size)}
               highlightOnHover
               responsive
               noDataComponent="No Product found."
@@ -310,6 +289,7 @@ export default function Product() {
           </div>
         )}
       </Card>
+
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} size="sm" handler={setDeleteDialogOpen}>
         <DialogHeader className="flex justify-center">
@@ -319,7 +299,10 @@ export default function Product() {
         </DialogHeader>
         <DialogBody className="text-black text-base">
           Are you sure you want to delete{" "}
-          <strong className="text-red-500">{selectedProduct?.product_name}</strong>?
+          <strong className="text-red-500">
+            {selectedProduct?.product_name}
+          </strong>
+          ?
         </DialogBody>
         <DialogFooter className="flex justify-center gap-4">
           <Button
@@ -334,9 +317,14 @@ export default function Product() {
           </Button>
         </DialogFooter>
       </Dialog>
+
       {/* Modals */}
       {addOpen && (
-        <AddProduct open={addOpen} handleOpenClose={setAddOpen} refresh={fetchProducts} />
+        <AddProduct
+          open={addOpen}
+          handleOpenClose={setAddOpen}
+          refresh={fetchProducts}
+        />
       )}
       {editOpen && (
         <EditProduct

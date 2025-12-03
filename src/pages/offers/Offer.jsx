@@ -142,23 +142,29 @@ export default function Offer() {
     },
     {
       name: "Discount (%)",
-      selector: (row) => row.offer_percentage,
+      selector: (row) => Number(row.offer_percentage) || 0, // ✅ numeric sorting
       sortable: true,
       cell: (row) => (
         <span className="font-semibold text-green-700">
-          {row.offer_percentage}%
+          {Number(row.offer_percentage)}%
         </span>
       ),
+      sortFunction: (a, b) =>
+        Number(a.offer_percentage || 0) - Number(b.offer_percentage || 0),
     },
     {
       name: "Start Date",
-      selector: (row) => row.start_date,
+      selector: (row) => row.start_date || "",
       sortable: true,
+      sortFunction: (a, b) =>
+        new Date(a.start_date) - new Date(b.start_date), // ✅ date sorting
     },
     {
       name: "End Date",
-      selector: (row) => row.end_date,
+      selector: (row) => row.end_date || "",
       sortable: true,
+      sortFunction: (a, b) =>
+        new Date(a.end_date) - new Date(b.end_date), // ✅ date sorting
     },
     {
       name: "Status",
@@ -175,7 +181,7 @@ export default function Offer() {
     {
       name: "Actions",
       cell: (row) => (
-       <div className="flex justify-center items-center gap-2">
+        <div className="flex justify-center items-center gap-2">
           <IconButton
             size="sm"
             variant="text"

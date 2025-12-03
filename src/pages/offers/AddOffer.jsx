@@ -15,6 +15,7 @@ import {
 import api from "@/utils/base_url";
 import toast from "react-hot-toast";
 
+
 export default function AddOffer({ open, handleOpenClose, refresh }) {
   const [form, setForm] = useState({
     category: "",
@@ -176,9 +177,9 @@ export default function AddOffer({ open, handleOpenClose, refresh }) {
       await api.post("offers/", payload);
       toast.success("Offer(s) added successfully!");
       setTimeout(() => {
-          handleOpenClose(false);
-          refresh?.();
-        }, 1000);
+        handleOpenClose(false);
+        refresh?.();
+      }, 1000);
       resetForm();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to add offer(s)");
@@ -200,7 +201,7 @@ export default function AddOffer({ open, handleOpenClose, refresh }) {
       <Card className="p-6 rounded-2xl shadow-lg">
         <DialogHeader className="justify-center">
           <Typography variant="h5" color="blue-gray" className="font-semibold">
-            Add Offer 🎁
+            Add Offer
           </Typography>
         </DialogHeader>
 
@@ -221,7 +222,11 @@ export default function AddOffer({ open, handleOpenClose, refresh }) {
                   ?.category_name || "Select Category"
               }
               onChange={(val) => {
-                setForm((prev) => ({ ...prev, category: val, product: "" }));
+                setForm((prev) => ({ ...prev, category: val, product: "",dropdownOpen: false, }));
+              }}
+              menuProps={{
+                className:
+                  "max-h-52 overflow-y-auto z-[9999] rounded-md shadow-md bg-white", // scrollable dropdown
               }}
             >
               {categories.map((cat) => (
@@ -231,39 +236,116 @@ export default function AddOffer({ open, handleOpenClose, refresh }) {
               ))}
             </Select>
 
-            {/* Product */}
-            <Select
-              key={form.category}
-              label={
-                <span>
-                  Select Product <span className="text-red-500">*</span>
+            {/* Product (Multi-Select with Checkboxes, same UI size) */}
+            <div className="relative w-full bottom-2.5">
+              
+              <div
+                onClick={() => {
+                  if (!form.category || !products.length) return;
+                  setForm((prev) => ({ ...prev, dropdownOpen: !prev.dropdownOpen }));
+                }}
+                className={`mt-2 border rounded-md px-3 py-2.5 bg-white flex justify-between items-center cursor-pointer
+      ${!form.category || !products.length
+                    ? "bg-gray-100 cursor-not-allowed border-gray-200"
+                    : form.dropdownOpen
+                      ? "border-gray-900"
+                      : "border-gray-300 hover:border-gray-400"
+                  }`}
+              >
+                <span className="text-blue-gray-800 text-sm truncate">
+                  {form.product.length === 0
+                    ? "Select Product"
+                    : form.product.length === products.length
+                      ? "All Products Selected"
+                      : `${form.product.length} Product${form.product.length > 1 ? "s" : ""} Selected`}
                 </span>
-              }
-              value={Array.isArray(form.product) ? "all" : form.product || ""}
-              onChange={(val) => {
-                if (val === "all") {
-                  const allIds = products.map((p) => String(p.id));
-                  setForm((prev) => ({ ...prev, product: allIds }));
-                } else {
-                  setForm((prev) => ({ ...prev, product: val }));
-                }
-              }}
-              disabled={!form.category || !products.length}
-              selected={(element) => {
-                if (Array.isArray(form.product)) return "All Products";
-                const selectedProduct = products.find(
-                  (p) => String(p.id) === String(form.product)
-                );
-                return selectedProduct ? selectedProduct.product_name : element;
-              }}
-            >
-              <Option value="all">Select All Products</Option>
-              {products.map((prod) => (
-                <Option key={prod.id} value={String(prod.id)}>
-                  {prod.product_name}
-                </Option>
-              ))}
-            </Select>
+
+                {/* Dropdown arrow */}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-5 w-5 text-gray-700 transform transition-transform duration-200 ${form.dropdownOpen ? "rotate-180" : ""
+                    }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+
+              {/* Dropdown Panel */}
+              {form.dropdownOpen && (
+                <div
+                  className="absolute mt-1 w-full max-h-60 overflow-y-auto bg-white border border-blue-gray-100 rounded-md shadow-md z-[9999] animate-fadeIn"
+                >
+                  {/* Select All */}
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (form.product.length === products.length) {
+                        setForm((prev) => ({ ...prev, product: [] }));
+                      } else {
+                        setForm((prev) => ({
+                          ...prev,
+                          product: products.map((p) => String(p.id)),
+                        }));
+                      }
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-blue-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.product.length === products.length && products.length > 0}
+                      readOnly
+                    />
+                    <span className="text-sm font-medium text-blue-gray-800">Select All Products</span>
+                  </div>
+
+                  <div className="border-t border-gray-100" />
+
+                  {/* Product List */}
+                  {products.map((prod) => (
+                    <div
+                      key={prod.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setForm((prev) => {
+                          const exists = prev.product.includes(String(prod.id));
+                          const updated = exists
+                            ? prev.product.filter((id) => id !== String(prod.id))
+                            : [...prev.product, String(prod.id)];
+                          return { ...prev, product: updated };
+                        });
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 hover:bg-blue-gray-50 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form.product.includes(String(prod.id))}
+                        readOnly
+                      />
+                      <span className="text-sm text-blue-gray-800">{prod.product_name}</span>
+                    </div>
+                  ))}
+
+                  {/* Done Button */}
+                  <div className="sticky bottom-0 bg-white border-t py-2 flex justify-center">
+                    <Button
+                      size="sm"
+                      color="gray"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setForm((prev) => ({ ...prev, dropdownOpen: false }));
+                      }}
+                      className="text-sm shadow-sm"
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
 
             {/* Offer name & percentage */}
             <Input
@@ -277,7 +359,7 @@ export default function AddOffer({ open, handleOpenClose, refresh }) {
               label="Offer Percentage (%)"
               type="number"
               min="1"
-              max="99"
+              max="100"
               value={form.offer_percentage}
               onChange={(e) => {
                 const val = e.target.value;

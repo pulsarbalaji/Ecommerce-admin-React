@@ -184,6 +184,10 @@ export default function ViewOrder({ orderId, open, handleOpenClose }) {
                 {order.preferred_courier_service}
               </div>
               <div>
+                <strong>Courier Number:</strong>{" "}
+                {order.courier_number}
+              </div>
+              <div>
                 <strong>Delivered At:</strong>{" "}
                 {order.delivered_at
                   ? new Date(order.delivered_at).toLocaleString()
