@@ -145,7 +145,7 @@ export default function Orders() {
     if (!isGlobalSearch) {
       fetchOrders(page, itemsPerPage);
     }
-  }, [fetchOrders, itemsPerPage, isGlobalSearch]);
+  }, [fetchOrders,page, itemsPerPage, isGlobalSearch]);
 
 
 
@@ -270,7 +270,7 @@ export default function Orders() {
           <Input
             crossOrigin=""
             color="gray"
-            label="Global search..."
+            label="Order search..."
             icon={<MagnifyingGlassIcon className="h-5 w-5" />}
             value={search}
             onChange={(e) => setSearch(e.target.value)}

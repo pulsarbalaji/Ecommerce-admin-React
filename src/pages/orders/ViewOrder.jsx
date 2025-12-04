@@ -83,21 +83,18 @@ export default function ViewOrder({ orderId, open, handleOpenClose }) {
   const subtotal = useMemo(() => {
     return order
       ? order.items.reduce(
-          (sum, item) => sum + parseFloat(item.price) * item.quantity,
-          0
-        )
+        (sum, item) => sum + parseFloat(item.price) * item.quantity,
+        0
+      )
       : 0;
   }, [order]);
 
-  const totalTax = useMemo(() => {
-    return order
-      ? order.items.reduce(
-          (sum, item) => sum + parseFloat(item.tax) * item.quantity,
-          0
-        )
-      : 0;
-  }, [order]);
+  
 
+  const totalTax = useMemo(
+    () => (order ? parseFloat(order.tax) : 0),
+    [order]
+  );
   const shippingCharge = useMemo(
     () => (order ? parseFloat(order.shipping_cost) : 0),
     [order]
@@ -122,7 +119,7 @@ export default function ViewOrder({ orderId, open, handleOpenClose }) {
       {/* Sticky Header */}
       <DialogHeader className="justify-center sticky top-0 bg-white z-10 border-b pb-2">
         <Typography variant="h5" color="blue-gray" className="font-semibold">
-          View Order 
+          View Order
         </Typography>
       </DialogHeader>
 
@@ -220,13 +217,18 @@ export default function ViewOrder({ orderId, open, handleOpenClose }) {
                     <th className="px-4 py-2 border text-center">Quantity</th>
                     <th className="px-4 py-2 border text-center">Price</th>
                     <th className="px-4 py-2 border text-center">Tax</th>
-                    <th className="px-4 py-2 border text-center">Total</th>
+                    <th className="px-4 py-2 border text-center">Sub Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {order.items.map((item) => (
                     <tr key={item.product} className="hover:bg-gray-50">
-                      <td className="px-4 py-2 border">{item.product_name}</td>
+                      <td className="px-4 py-2 border">
+                        {item.product_name
+                          .replace(/_/g, " ")              // replace _ with space
+                          .toLowerCase()                   // convert to lowercase
+                          .replace(/\b\w/g, (c) => c.toUpperCase())}
+                      </td>
                       <td className="px-4 py-2 border text-center">
                         {item.quantity}
                       </td>
