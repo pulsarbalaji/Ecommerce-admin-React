@@ -21,7 +21,6 @@ import {
 } from "recharts";
 import Skeleton from "react-loading-skeleton";
 import {
-  CheckCircleIcon,
   ClockIcon,
   XCircleIcon,
   UsersIcon,
@@ -29,6 +28,10 @@ import {
   CurrencyRupeeIcon,
   ArrowUpIcon,
   ArrowDownIcon,
+  TruckIcon,
+  CheckBadgeIcon,
+  CubeIcon,
+  ClipboardDocumentCheckIcon,
 } from "@heroicons/react/24/solid";
 
 const currencyFormatter = (value) =>
@@ -63,13 +66,27 @@ const statusColor = (status) => {
   }
 };
 
+const formatINR = (num) => {
+  if (num === 0 || !num) return "₹0";
+
+  return "₹" + num.toLocaleString("en-IN");
+};
+
+<Tooltip
+  formatter={(value, name) => [
+    formatINR(value),
+    "Sales"
+  ]}
+/>
+
 const statIcons = {
   total_sales: <CurrencyRupeeIcon className="w-6 h-6 text-white" />,
   total_orders: <ShoppingBagIcon className="w-6 h-6 text-white" />,
   total_customers: <UsersIcon className="w-6 h-6 text-white" />,
-  total_products: <ShoppingBagIcon className="w-6 h-6 text-white" />,
-  confirmed_orders: <ClockIcon className="w-6 h-6 text-white" />,
-  cancelled_orders: <XCircleIcon className="w-6 h-6 text-white" />,
+  total_products: <CubeIcon className="w-6 h-6 text-white" />,
+  confirmed_orders: <ClipboardDocumentCheckIcon className="w-6 h-6 text-white" />,
+  shipped_orders: <TruckIcon className="w-6 h-6 text-white" />,
+  delivered_orders: <CheckBadgeIcon className="w-6 h-6 text-white" />,
 };
 
 const Home = () => {
@@ -117,35 +134,31 @@ const Home = () => {
           return (
             <Card
               key={key}
-              className="p-4 flex items-center gap-4 shadow-sm border"
+              className="p-4 flex flex-col items-center text-center gap-3 shadow-sm border"
             >
               <div className="bg-gray-500 rounded-full w-10 h-10 flex items-center justify-center">
                 {statIcons[key]}
               </div>
 
-              <div className="flex-1">
-                <Typography className="text-gray-500 capitalize text-sm">
-                  {key.replace(/_/g, " ")}
+              <Typography className="text-gray-500 capitalize text-sm text-center">
+                {key.replace(/_/g, " ")}
+              </Typography>
+
+              <div className="flex flex-col items-center">
+                <Typography variant="h5" className="font-bold mt-1 text-center">
+                  {key.includes("sales") ? currencyFormatter(value) : value}
                 </Typography>
-                <div className="flex items-center gap-2">
-                  <Typography variant="h5" className="font-bold mt-1">
-                    {key.includes("sales") ? currencyFormatter(value) : value}
-                  </Typography>
-                  {trendUp ? (
-                    <ArrowUpIcon className="w-4 h-4 text-green-500" />
-                  ) : (
-                    <ArrowDownIcon className="w-4 h-4 text-red-500" />
-                  )}
-                </div>
-                {key === "order_confirmed_orders" && (
-                  <Progress
-                    value={(stats.order_confirmed_orders / stats.total_orders) * 100}
-                    className="mt-2 h-2"
-                    color="blue"
-                  />
-                )}
               </div>
+
+              {key === "order_confirmed_orders" && (
+                <Progress
+                  value={(stats.order_confirmed_orders / stats.total_orders) * 100}
+                  className="mt-2 h-2 w-full"
+                  color="blue"
+                />
+              )}
             </Card>
+
           );
         })}
       </div>
@@ -157,16 +170,16 @@ const Home = () => {
         </Typography>
         <ResponsiveContainer width="100%" height={250}>
           <LineChart data={sales_chart}
-           margin={{ top: 10, right: 20, left: 40, bottom: 10 }}>
+            margin={{ top: 10, right: 20, left: 40, bottom: 10 }}>
             <XAxis dataKey="date" />
-            <YAxis
-              tickFormatter={(value) => currencyFormatter(value)}
-            />
+            <YAxis tickFormatter={(value) => formatINR(value)} />
             <Tooltip
-              formatter={(value) =>
-                typeof value === "number" ? currencyFormatter(value) : value
-              }
+              formatter={(value, name) => [
+                formatINR(value),
+                "Sales"
+              ]}
             />
+
             <Line
               type="monotone"
               dataKey="sales"
@@ -185,13 +198,29 @@ const Home = () => {
         <ResponsiveContainer width="100%" height={250}>
           <BarChart data={top_products}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="product_name" />
-            <YAxis />
-            <Tooltip
-              formatter={(value) =>
-                typeof value === "number" ? currencyFormatter(value) : value
+            <XAxis
+              dataKey="product_name"
+              tickFormatter={(value) =>
+                value
+                  .replace(/_/g, " ")                 // replace _ with space
+                  .replace(/\b\w/g, (char) => char.toUpperCase()) // capitalize each word
               }
             />
+
+            <YAxis />
+            <Tooltip
+              formatter={(value, name) => {
+                if (name === "Revenue") {
+                  return ["₹ " + Number(value).toLocaleString("en-IN"), name];
+                }
+                return [value, name];
+              }}
+              labelFormatter={(label) =>
+                label.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+              }
+            />
+
+
             <Legend />
             <Bar dataKey="total_sold" fill="#3b82f6" name="Sold Qty" />
             <Bar dataKey="total_revenue" fill="#16a34a" name="Revenue" />
@@ -214,7 +243,7 @@ const Home = () => {
                   "Email",
                   "Amount",
                   "Status",
-                  "Date",
+                  "Ordered Date",
                 ].map((h) => (
                   <th
                     key={h}
@@ -237,10 +266,6 @@ const Home = () => {
                   <td className={`px-4 py-2 font-medium ${statusColor(o.order_status)}`}>
                     {formatStatus(o.order_status)}
                   </td>
-                  <td className="px-4 py-2">
-                    {new Date(o.ordered_at).toLocaleString()}
-                  </td>
-
                   <td className="px-4 py-2">
                     {new Date(o.ordered_at).toLocaleString()}
                   </td>
@@ -269,10 +294,10 @@ const Home = () => {
                 <li key={p.id} className="flex justify-between items-center">
                   <div>
                     <Typography variant="small" className="font-semibold text-gray-700">
-                      {p.product_name}
+                      {p.product_name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                     </Typography>
                     <Typography variant="tiny" className="text-gray-500">
-                      {p.category_name}
+                      {p.category_name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
                     </Typography>
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${badgeColor}`}>

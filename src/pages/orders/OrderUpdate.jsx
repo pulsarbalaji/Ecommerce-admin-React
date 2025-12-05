@@ -23,13 +23,37 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
   const [courierNumber, setCourierNumber] = useState("");
 
   const statusOptions = [
-    { value: "pending", label: "Pending" },
     { value: "order_confirmed", label: "Order Confirmed" },
     { value: "shipped", label: "Shipped" },
     { value: "delivered", label: "Delivered" },
-    { value: "cancelled", label: "Cancelled" },
-    { value: "returned", label: "Returned" },
   ];
+const getAvailableStatusOptions = () => {
+  if (!order) return [];
+
+  const current = {
+    value: order.status,
+    label:
+      order.status === "order_confirmed"
+        ? "Order Confirmed"
+        : order.status === "shipped"
+        ? "Shipped"
+        : "Delivered",
+    disabled: true,
+  };
+
+  let next = [];
+
+  if (order.status === "order_confirmed") {
+    next = [{ value: "shipped", label: "Shipped" }];
+  } else if (order.status === "shipped") {
+    next = [{ value: "delivered", label: "Delivered" }];
+  } else if (order.status === "delivered") {
+    next = []; // completed
+  }
+
+  return [current, ...next];
+};
+
 
   const fetchOrder = async () => {
     setLoading(true);
@@ -127,27 +151,29 @@ export default function OrderUpdate({ orderId, open, handleOpenClose, refresh })
             {/* Status Select */}
             <div className="w-full flex justify-center mt-4">
               <div className="w-64">
-                <Select
-                  label="Order Status"
-                  value={order.status}
-                  onChange={(value) => {
-                    setOrder({ ...order, status: value });
-                    if (value !== "shipped") setCourierNumber("");
-                  }}
-                  menuProps={{
-                    className: "z-[9999] max-h-36 overflow-y-auto",
-                    placement: "bottom-start",
-                  }}
-                  containerProps={{
-                    className: "relative z-[9999]",
-                  }}
-                >
-                  {statusOptions.map((s) => (
-                    <Option key={s.value} value={s.value}>
-                      {s.label}
-                    </Option>
-                  ))}
-                </Select>
+            <Select
+  label="Order Status"
+  value={order.status}
+  onChange={(value) => {
+    setOrder({ ...order, status: value });
+    if (value !== "shipped") setCourierNumber("");
+  }}
+  menuProps={{
+    className: "z-[9999] max-h-36 overflow-y-auto",
+    placement: "bottom-start",
+  }}
+  containerProps={{
+    className: "relative z-[9999]",
+  }}
+>
+  {getAvailableStatusOptions().map((s) => (
+    <Option key={s.value} value={s.value} disabled={s.disabled}>
+      {s.label}
+    </Option>
+  ))}
+</Select>
+
+
               </div>
             </div>
 
